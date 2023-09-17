@@ -40,6 +40,9 @@ class Provider extends ServiceProvider
 
     public function boot(): void
     {
+        $baseDir = dirname(__DIR__);
+
+
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         Seeder::add([NavigationSeeder::class, ConfigurationSeeder::class]);
 
@@ -48,6 +51,10 @@ class Provider extends ServiceProvider
         } else {
             $this->commands([PushOrderToXeroCommand::class]);
         }
+
+        $this->publishes([
+            $baseDir . '/publish/js' => public_path('vendor/adminui-xero-oauth2')
+        ], 'adminui-public');
     }
 
     private function pushJavascript(): void
