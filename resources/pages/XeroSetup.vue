@@ -1,7 +1,7 @@
 <template>
-	<v-card class="mt-4">
-		<v-row>
-			<v-col cols="9">
+	<v-row>
+		<v-col cols="9">
+			<v-card class="py-4">
 				<div class="xero-logo d-flex px-4">
 					<XeroLogo />
 				</div>
@@ -76,68 +76,66 @@
 						hint="When creating invoices, this will be prefixed to the Xero order reference"
 					/>
 				</AuiSetting>
-			</v-col>
-			<v-col cols="3">
-				<AuiCard title="Connection Status" class="mb-8">
-					<template v-if="props.xeroStatus.error">
-						<v-alert type="error">{{ props.xeroStatus.error }}</v-alert>
-						<v-btn color="primary" block :href="route('xero.auth.authorize')">Reconnect to Xero</v-btn>
-					</template>
-					<template v-else-if="props.xeroStatus.connected">
-						<p class="text-center text-h6">
-							<v-icon class="mr-4" color="success">mdi-flash</v-icon>Connected
-						</p>
-						<p class="text-center">
-							Connected as <strong>{{ props.xeroStatus.organisationName }}</strong> via
-							{{ props.xeroStatus.username }}
-						</p>
-						<v-btn text color="primary" block :href="route('xero.auth.authorize')">Reconnect to Xero</v-btn>
-					</template>
-					<template v-else>
-						<p class="text-center text-h6"><v-icon class="mr-4">mdi-flash-off</v-icon>Not Connected</p>
-						<v-btn color="primary" block :href="route('xero.auth.authorize')">Connect to Xero</v-btn>
-					</template>
-				</AuiCard>
-				<AuiCard title="Actions" class="my-8">
-					<v-list>
-						<v-list-item @click.stop="showOrderSyncFlow = true">
-							<v-list-item-icon>
-								<v-icon>mdi-book-sync</v-icon>
-							</v-list-item-icon>
-							<v-list-item-content>
-								<v-list-item-title>Manually Sync Orders</v-list-item-title>
-							</v-list-item-content>
-						</v-list-item>
-						<v-list-item
-							:disabled="props.failedOrderSyncs.length === 0"
-							@click.stop="showFailedSyncsFlow = true"
-						>
-							<v-list-item-icon>
-								<v-icon color="error">mdi-sync-alert</v-icon>
-							</v-list-item-icon>
-							<v-list-item-content>
-								<v-list-item-title>
-									<v-badge
-										:content="props.failedOrderSyncs.length"
-										overlap
-										right
-										inline
-										class="mt-0"
-										color="error"
-										:value="props.failedOrderSyncs.length > 0"
-									>
-										<span>View Failed Order Syncs</span>
-									</v-badge>
-								</v-list-item-title>
-							</v-list-item-content>
-						</v-list-item>
-					</v-list>
-				</AuiCard>
-			</v-col>
-		</v-row>
+			</v-card>
+		</v-col>
+		<v-col cols="3">
+			<AuiCard title="Connection Status" class="mb-8">
+				<template v-if="props.xeroStatus.error">
+					<v-alert type="error">{{ props.xeroStatus.error }}</v-alert>
+					<v-btn color="primary" block :href="route('xero.auth.authorize')">Reconnect to Xero</v-btn>
+				</template>
+				<template v-else-if="props.xeroStatus.connected">
+					<p class="text-center text-h6"><v-icon class="mr-4" color="success">mdi-flash</v-icon>Connected</p>
+					<p class="text-center">
+						Connected as <strong>{{ props.xeroStatus.organisationName }}</strong> via
+						{{ props.xeroStatus.username }}
+					</p>
+					<v-btn text color="primary" block :href="route('xero.auth.authorize')">Reconnect to Xero</v-btn>
+				</template>
+				<template v-else>
+					<p class="text-center text-h6"><v-icon class="mr-4">mdi-flash-off</v-icon>Not Connected</p>
+					<v-btn color="primary" block :href="route('xero.auth.authorize')">Connect to Xero</v-btn>
+				</template>
+			</AuiCard>
+			<AuiCard title="Actions" class="my-8">
+				<v-list>
+					<v-list-item @click.stop="showOrderSyncFlow = true">
+						<v-list-item-icon>
+							<v-icon>mdi-book-sync</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>Manually Sync Orders</v-list-item-title>
+						</v-list-item-content>
+					</v-list-item>
+					<v-list-item
+						:disabled="props.failedOrderSyncs.length === 0"
+						@click.stop="showFailedSyncsFlow = true"
+					>
+						<v-list-item-icon>
+							<v-icon color="error">mdi-sync-alert</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>
+								<v-badge
+									:content="props.failedOrderSyncs.length"
+									overlap
+									right
+									inline
+									class="mt-0"
+									color="error"
+									:value="props.failedOrderSyncs.length > 0"
+								>
+									<span>View Failed Order Syncs</span>
+								</v-badge>
+							</v-list-item-title>
+						</v-list-item-content>
+					</v-list-item>
+				</v-list>
+			</AuiCard>
+		</v-col>
 		<OrderSyncFlow v-model="showOrderSyncFlow" />
 		<FailedOrderSyncs v-model="showFailedSyncsFlow" :items="props.failedOrderSyncs" />
-	</v-card>
+	</v-row>
 </template>
 
 <script setup>
