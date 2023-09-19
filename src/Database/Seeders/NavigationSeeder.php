@@ -9,7 +9,7 @@ class NavigationSeeder extends Seeder
 {
     public function run()
     {
-        $setup = Navigation::where('ref', 'setup')->first();
+        $setup = Navigation::firstWhere('ref', 'setup');
 
         Navigation::where('ref', 'setup.xero')->delete();
 

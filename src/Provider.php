@@ -2,6 +2,7 @@
 
 namespace AdminUI\AdminUIXero;
 
+use AdminUI\AdminUI\Models\Order;
 use AdminUI\AdminUI\Facades\Seeder;
 use Illuminate\Support\Facades\View;
 use AdminUI\AdminUIXero\Facades\Xero;
@@ -11,13 +12,14 @@ use Illuminate\Console\Scheduling\Schedule;
 use AdminUI\AdminUIXero\Services\XeroService;
 use AdminUI\AdminUIXero\Commands\CopyContacts;
 use AdminUI\AdminUIXero\Commands\InstallAUIXero;
-use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
 use AdminUI\AdminUIXero\Services\XeroContactService;
 use AdminUI\AdminUIXero\Services\XeroInvoiceService;
 use AdminUI\AdminUIXero\Services\XeroPaymentService;
 use Illuminate\Contracts\Support\DeferrableProvider;
+use AdminUI\AdminUIXero\Commands\PushAllOrdersToXero;
 use AdminUI\AdminUIXero\Providers\XeroServiceProvider;
 use AdminUI\AdminUIXero\Providers\EventServiceProvider;
+use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
 use AdminUI\AdminUIXero\Providers\ConfigServiceProvider;
 use AdminUI\AdminUIXero\Database\Seeders\NavigationSeeder;
 use AdminUI\AdminUIXero\Database\Seeders\ConfigurationSeeder;
@@ -42,14 +44,12 @@ class Provider extends ServiceProvider
     {
         $baseDir = dirname(__DIR__);
 
-
-        $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
-        Seeder::add([NavigationSeeder::class, ConfigurationSeeder::class]);
+        $this->registerDatabaseResources();
 
         if (!$this->app->runningInConsole()) {
             $this->pushJavascript();
         } else {
-            $this->commands([PushOrderToXeroCommand::class]);
+            $this->commands([PushOrderToXeroCommand::class, PushAllOrdersToXero::class]);
         }
 
         $this->publishes([
@@ -65,6 +65,12 @@ class Provider extends ServiceProvider
             ->toHtml();
 
         View::startPush('aui_packages', $output);
+    }
+
+    private function registerDatabaseResources()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
+        Seeder::add([NavigationSeeder::class, ConfigurationSeeder::class]);
     }
 
     private function registerFacades()

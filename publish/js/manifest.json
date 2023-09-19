@@ -3,19 +3,19 @@
     "dynamicImports": [
       "resources/pages/XeroSetup.vue"
     ],
-    "file": "assets/index-b441d88c.js",
+    "file": "assets/index-fdaf6915.js",
     "isEntry": true,
     "src": "resources/index.js"
   },
   "resources/pages/XeroSetup.css": {
-    "file": "assets/XeroSetup-fc560fed.css",
+    "file": "assets/XeroSetup-489cef46.css",
     "src": "resources/pages/XeroSetup.css"
   },
   "resources/pages/XeroSetup.vue": {
     "css": [
-      "assets/XeroSetup-fc560fed.css"
+      "assets/XeroSetup-489cef46.css"
     ],
-    "file": "assets/XeroSetup-457b5ece.js",
+    "file": "assets/XeroSetup-cc35e7b2.js",
     "isDynamicEntry": true,
     "src": "resources/pages/XeroSetup.vue"
   }

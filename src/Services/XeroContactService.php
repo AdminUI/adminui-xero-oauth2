@@ -9,14 +9,14 @@ use AdminUI\AdminUI\Models\User;
 
 class XeroContactService
 {
-    public function getContact(Account $account)
+    public function getContact(Account $account): \XeroAPI\XeroPHP\Models\Accounting\Contact
     {
         // Retrieve an existing contact if it's already been imported
-        $contact = self::getContactById($account->import_id);
+        $contact = self::getContactById($account->xero_contact_id);
 
         // Ensure the contact account is not archived
-        if ($contact && $contact['ContactStatus'] == 'ARCHIVED') {
-            $account->import_id = null;
+        if ($contact && $contact['contact_status'] == 'ARCHIVED') {
+            $account->xero_contact_id = null;
             $account->save();
             unset($contact);
         }
@@ -115,33 +115,33 @@ class XeroContactService
         if ($addresses) {
             foreach ($addresses as $address) {
                 $add[] = [
-                    'AddressType' => $address->is_billing ? 'POBOX' : 'STREET',
-                    'AddressLine1' => $address->addressee ?? $account->name,
-                    'AddressLine2' => $address->address ?? '',
-                    'AddressLine3' => $address->address_2 ?? '',
-                    'City' => $address->town ?? '',
-                    'Region' => $address->county ?? '',
-                    'PostalCode' => $address->postcode,
-                    'Country' => $address->country->name ?? 'United Kingdom'
+                    'address_type' => $address->is_billing ? 'POBOX' : 'STREET',
+                    'address_line_1' => $address->addressee ?? $account->name,
+                    'address_line_2' => $address->address ?? '',
+                    'address_line_3' => $address->address_2 ?? '',
+                    'city' => $address->town ?? '',
+                    'region' => $address->county ?? '',
+                    'postal_code' => $address->postcode,
+                    'country' => $address->country->name ?? 'United Kingdom'
                 ];
             }
         }
 
         $contacts = Xero::updateOrCreateContacts([
-            'Name' => $account->name,
-            'ContactNumber' => 'AUI' . $account->id,
-            'EmailAddress' => $user->email ?? 'noemail@' . Str::slug($account->name) . 'co.uk',
-            'FirstName' => $user->first_name ?? $account->name,
-            'LastName' => $user->last_name ?? '',
-            'TaxNumber' => $account->tax_number,
-            'Addresses' => $add ?? [],
-            'Phones' => [
+            'name' => $account->name,
+            'contact_number' => 'AUI' . $account->id,
+            'email_address' => $user->email ?? 'noemail@' . Str::slug($account->name) . 'co.uk',
+            'first_name' => $user->first_name ?? $account->name,
+            'last_name' => $user->last_name ?? '',
+            'tax_number' => $account->tax_number,
+            'addresses' => $add ?? [],
+            'phones' => [
                 [
-                    'PhoneType' => 'DEFAULT',
-                    'PhoneNumber' => $user->phone ?? '0',
+                    'phone_type' => 'DEFAULT',
+                    'phone_number' => $user->phone ?? '0',
                 ],
             ],
-            'PaymentTerms' => [
+            'payment_terms' => [
                 'DAYSAFTERBILLDATE' => $account->payment_days ?? 0
             ]
         ]);
@@ -155,7 +155,7 @@ class XeroContactService
      */
     public function saveContact($contact, $account): void
     {
-        $account->import_id = $contact['contact_id'];
+        $account->xero_contact_id = $contact['contact_id'];
         $account->save();
     }
 

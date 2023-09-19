@@ -9,7 +9,21 @@
 					title="Integration Settings"
 					help="When enabled, orders placed through AdminUI will be automatically pushed to the linked Xero account"
 				>
-					<v-switch v-model="form.xero_enabled" label="Sync" :disabled="!props.xeroStatus.connected" />
+					<v-switch
+						v-model="form.xero_sync_orders"
+						label="Sync Orders"
+						:disabled="!props.xeroStatus.connected"
+					/>
+					<v-switch
+						v-model="form.xero_sync_contacts"
+						label="Sync Contacts"
+						:disabled="!props.xeroStatus.connected"
+					/>
+					<v-switch
+						v-model="form.xero_sync_payments"
+						label="Sync Payments"
+						:disabled="!props.xeroStatus.connected"
+					/>
 				</AuiSetting>
 				<v-divider />
 				<AuiSetting title="App Credentials">
@@ -99,7 +113,7 @@
 			</AuiCard>
 			<AuiCard title="Actions" class="my-8">
 				<v-list>
-					<v-list-item @click.stop="showOrderSyncFlow = true">
+					<v-list-item :disabled="!props.xeroStatus.connected" @click.stop="showOrderSyncFlow = true">
 						<v-list-item-icon>
 							<v-icon>mdi-book-sync</v-icon>
 						</v-list-item-icon>
@@ -108,7 +122,7 @@
 						</v-list-item-content>
 					</v-list-item>
 					<v-list-item
-						:disabled="props.failedOrderSyncs.length === 0"
+						:disabled="!props.xeroStatus.connected || props.failedOrderSyncs.length === 0"
 						@click.stop="showFailedSyncsFlow = true"
 					>
 						<v-list-item-icon>

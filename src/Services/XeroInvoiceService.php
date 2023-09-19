@@ -6,7 +6,8 @@ use Carbon\Carbon;
 use AdminUI\AdminUI\Models\Order;
 use AdminUI\AdminUIXero\Facades\Xero;
 use XeroAPI\XeroPHP\Models\Accounting\Contact;
-use XeroAPI\XeroPHP\Models\Accounting\Invoices;
+use XeroAPI\XeroPHP\Models\Accounting\Invoice;
+use XeroAPI\XeroPHP\Models\Accounting\LineItem;
 
 class XeroInvoiceService
 {
@@ -16,7 +17,7 @@ class XeroInvoiceService
      * @param Order $order The order to create an invoice for
      * @param Contact $contact The Xero contact to attach the invoices to
      */
-    public function syncOrder(Order $order, Contact $contact): Invoices|bool
+    public function syncOrder(Order $order, Contact $contact): Invoice|bool
     {
         // confirm the order is not empty
         if ($order->lines->count() <= 0) {
@@ -27,29 +28,29 @@ class XeroInvoiceService
 
         // Translate the order lines to an invoiceable data structure
         foreach ($order->lines as $item) {
-            $items[] = [
-                'Description' => $item->product_name . '(' . $item->sku_code . ')',
-                'Quantity' => $item->qty,
-                'UnitAmount' => $item->item_exc_tax / 100,
-                'LineAmount' => $item->line_exc_tax / 100,
-                'TaxAmount' => $item->line_tax / 100,
-                'AccountCode' => 200,
-                'TaxType' => $item->tax_rate == 20 ? 'OUTPUT2' : 'NONE',
-            ];
+            $items[] = new LineItem([
+                'description' => $item->product_name . '(' . $item->sku_code . ')',
+                'quantity' => $item->qty,
+                'unit_amount' => $item->item_exc_tax / 100,
+                'line_amount' => $item->line_exc_tax / 100,
+                'tax_amount' => $item->line_tax / 100,
+                'account_code' => 200,
+                'tax_type' => $item->tax_rate == 20 ? 'OUTPUT2' : 'NONE',
+            ]);
         }
 
         // Translate the postage to an invoiceable data structure
         $postage = $order->postageRate;
         if ($postage) {
-            $items[] = [
-                'Description' => $order->postage_description == '' ? $postage->postageType->name : $order->postage_description,
-                'Quantity' => 1,
-                'UnitAmount' => $order->postage_exc_tax / 100,
-                'LineAmount' => $order->postage_exc_tax / 100,
-                'TaxAmount' => $order->postage_tax / 100,
-                'AccountCode' => 200,
-                'TaxType' => $order->postage_exc_tax != $order->postage_inc_tax ? 'OUTPUT2' : 'NONE',
-            ];
+            $items[] = new LineItem([
+                'description' => $order->postage_description == '' ? $postage->postageType->name : $order->postage_description,
+                'quantity' => 1,
+                'unit_amount' => $order->postage_exc_tax / 100,
+                'line_amount' => $order->postage_exc_tax / 100,
+                'tax_amount' => $order->postage_tax / 100,
+                'account_code' => 200,
+                'tax_type' => $order->postage_exc_tax != $order->postage_inc_tax ? 'OUTPUT2' : 'NONE',
+            ]);
         }
 
         // Translate the address to an invoiceable data structure
@@ -58,25 +59,26 @@ class XeroInvoiceService
             $address = $order->delivery;
         }
         if ($address) {
-            $items[] = [
-                'Description' => 'Delivery Address: ' . $address->addressee . ', ' . $address->address . ', ' . $address->address_2 . ', ' . $address->town . ', ' . $address->county . ', ' . $address->postcode . '; Tel: ' . $address->phone,
-            ];
+            $items[] = new LineItem([
+                'description' => 'Delivery Address: ' . $address->addressee . ', ' . $address->address . ', ' . $address->address_2 . ', ' . $address->town . ', ' . $address->county . ', ' . $address->postcode . '; Tel: ' . $address->phone,
+            ]);
         }
 
         $due = Carbon::now()->addDays($order->account->payment_terms ?? 0)->format('Y-m-d');
         $prefix = auiSetting('xero_reference_prefix', '');
 
-        $data = [
-            'Type' => 'ACCREC',
-            'Contact' => [
-                'ContactID' => $contact['ContactID'],
-            ],
-            'DueDate' => $due,
-            'Reference' => $prefix . $order->id,
-            'LineAmountTypes' => 'Exclusive',
-            'LineItems' => $items,
-            'Status' => 'AUTHORISED',
-        ];
-        return Xero::updateOrCreateInvoices($data);
+        $data = new Invoice([
+            'type' => 'ACCREC',
+            'contact' => new Contact([
+                'contact_id' => $contact['contact_id'],
+            ]),
+            'due_date' => $due,
+            'reference' => $prefix . $order->id,
+            'line_amount_types' => 'Exclusive',
+            'line_items' => $items,
+            'status' => 'AUTHORISED',
+        ]);
+        $invoices = Xero::updateOrCreateInvoices($data);
+        return $invoices[0];
     }
 }

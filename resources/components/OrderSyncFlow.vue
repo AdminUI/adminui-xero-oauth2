@@ -18,20 +18,25 @@
 									help="Select a range of order dates that will be processed. No range searches all
 											orders."
 								>
-									<AuiInputDateRangePicker v-model="filters.date" label="Date Range" />
+									<AuiInputDateRangePicker
+										v-model="filters.date"
+										label="Date Range"
+										@input="selectedOrders = []"
+									/>
 								</AuiSetting>
 								<AuiSetting
 									title="Included Statuses"
 									help="Choose the order statuses that will be included"
 								>
 									<v-row no-gutters>
-										<v-col v-for="status in statuses" cols="12" sm="6" md="6">
+										<v-col v-for="status in statuses" :key="status.id" cols="12" sm="6" md="6">
 											<v-checkbox
 												v-model="filters.statuses"
 												:value="status.id"
 												:color="status.colour"
 												hide-details
 												class="mt-0 mb-2"
+												@change="selectedOrders = []"
 											>
 												<template #label>
 													<span class="text-capitalize">{{ status.name }}</span>
@@ -73,14 +78,16 @@
 							<v-card-text>
 								You are about to sync {{ selectedOrders.length }} orders to Xero.
 								<v-list dense>
-									<v-list-item v-for="order in selectedOrders">
+									<v-list-item v-for="order in selectedOrders" :key="order.id">
 										<v-list-item-avatar color="#33663333" size="50" style="font-size: 0.7rem">
 											<small class="font-weight-bold text-uppercase"
 												>{{ order.lines.length }}<br />items</small
 											>
 										</v-list-item-avatar>
 										<v-list-item-content>
-											<v-list-item-title>{{ order.account.name }}</v-list-item-title>
+											<v-list-item-title v-if="order.account">{{
+												order.account.name
+											}}</v-list-item-title>
 											<v-list-item-subtitle>{{
 												mediumDate(order.created_at)
 											}}</v-list-item-subtitle>

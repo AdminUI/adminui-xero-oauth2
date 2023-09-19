@@ -41,22 +41,24 @@ class SendOrderToXero implements ShouldQueue
     {
         // This will push the order to xero
         // Check that Xero Push is enabled in Settings
-        $xeroEnabled = auiSetting('xero_enabled', false);
+        $xeroSyncOrders = auiSetting('xero_sync_orders', false);
 
         // Run checks to see if Xero push is required for this order
-        if (!$xeroEnabled) {
+        if (!$xeroSyncOrders) {
             return;
         }
         $order = $this->event->order;
+
+        $xero = $order->integration()->type('xero')->firstOrNew();
+
         if (empty($order->account)) {
             Log::error('Order ' . $order->id . ' failed to sync to Xero because it\'s missing a linked account');
             return;
         }
-        if (!empty($order->processed_at)) {
+        if (!empty($xero) && $xero->processed_at) {
             info("Order " . $order->id . " has already been sent to Xero. Skipping.");
             return;
         }
-
 
         // Find existing Xero contact or generate a new one
         $contact = XeroContact::getContact($order->account);
@@ -64,11 +66,17 @@ class SendOrderToXero implements ShouldQueue
         // Generate an invoice
         $invoice = XeroInvoice::syncOrder($order, $contact);
 
+        // Check for any validation errors processing the invoice before saving as processed
+        if (!empty($invoice['validation_errors'])) {
+            $error = $invoice['validation_errors'][0];
+            throw new \Exception($error['message']);
+        }
+
         // Store the invoice information
-        $order->process_id = $invoice['invoice_id'];
-        $order->processed_at = \Carbon\Carbon::now();
-        $order->admin_notes = ($order->admin_notes != '' ? $order->admin_notes . '<br/>' : $order->admin_notes) . 'Xero Invoice Number: ' . $invoice['invoice_number'];
-        $order->save();
+        $xero->process_id = $invoice['invoice_id'];
+        $xero->processed_at = \Carbon\Carbon::now();
+        $xero->notes = ($order->admin_notes != '' ? $order->admin_notes . '<br/>' : $order->admin_notes) . 'Xero Invoice Number: ' . $invoice['invoice_number'];
+        $xero->save();
 
         // now the payment. Only process payments that have been done online, or have a transaction_id.
         foreach ($order->payments as $payment) {

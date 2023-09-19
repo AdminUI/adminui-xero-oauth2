@@ -14,8 +14,26 @@ class ConfigurationSeeder extends Seeder
 
         Configuration::where('name', 'xero_account_id')->delete();
 
-        Config::create('xero_enabled', [
-            'label' => 'Enabled',
+        Config::create('xero_sync_orders', [
+            'label' => 'Sync Orders',
+            'value_cast' => 'boolean',
+            'section' => 'xero',
+            'type' => 'switch',
+            'is_private' => true,
+            'is_active' => true
+        ], false);
+
+        Config::create('xero_sync_contacts', [
+            'label' => 'Sync Contacts',
+            'value_cast' => 'boolean',
+            'section' => 'xero',
+            'type' => 'switch',
+            'is_private' => true,
+            'is_active' => true
+        ], false);
+
+        Config::create('xero_sync_payments', [
+            'label' => 'Sync Payments',
             'value_cast' => 'boolean',
             'section' => 'xero',
             'type' => 'switch',
