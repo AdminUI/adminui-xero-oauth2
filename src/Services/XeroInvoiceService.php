@@ -65,7 +65,7 @@ class XeroInvoiceService
         }
 
         $due = Carbon::now()->addDays($order->account->payment_terms ?? 0)->format('Y-m-d');
-        $prefix = auiSetting('xero_reference_prefix', '');
+        $prefix = config('settings.invoice_prefix', '');
 
         $data = new Invoice([
             'type' => 'ACCREC',

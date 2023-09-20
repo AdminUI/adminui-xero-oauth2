@@ -64,13 +64,5 @@ class ConfigurationSeeder extends Seeder
             'is_private' => true,
             'is_active' => true
         ]);
-
-        Config::create('xero_reference_prefix', [
-            'label' => 'Reference Prefix',
-            'section' => 'xero',
-            'type' => 'text',
-            'is_private' => true,
-            'is_active' => true
-        ]);
     }
 }

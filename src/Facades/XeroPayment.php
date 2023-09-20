@@ -5,6 +5,8 @@ namespace AdminUI\AdminUIXero\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
+ * @method static \XeroAPI\XeroPHP\Models\Accounting\Payment syncPayment(\AdminUI\AdminUI\Models\Payment $payment, string $processId = null)
+ * 
  * @see \AdminUI\AdminUIXero\Services\XeroPaymentService
  */
 class XeroPayment extends Facade

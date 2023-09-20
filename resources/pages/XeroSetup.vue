@@ -6,7 +6,7 @@
 					<XeroLogo />
 				</div>
 				<AuiSetting
-					title="Integration Settings"
+					title="Sync Orders"
 					help="When enabled, orders placed through AdminUI will be automatically pushed to the linked Xero account"
 				>
 					<v-switch
@@ -14,18 +14,30 @@
 						label="Sync Orders"
 						:disabled="!props.xeroStatus.connected"
 					/>
+				</AuiSetting>
+				<AuiSetting
+					title="Sync Contact Updates"
+					help="While contacts will initially be pushed when syncing orders, you can also choose to push changes to your accounts to Xero to update linked contacts"
+				>
 					<v-switch
 						v-model="form.xero_sync_contacts"
 						label="Sync Contacts"
 						:disabled="!props.xeroStatus.connected"
 					/>
+				</AuiSetting>
+				<AuiSetting
+					title="Sync Payments"
+					help="When enabled, orders placed through AdminUI will be automatically pushed to the linked Xero account"
+				>
 					<v-switch
 						v-model="form.xero_sync_payments"
 						label="Sync Payments"
 						:disabled="!props.xeroStatus.connected"
 					/>
 				</AuiSetting>
-				<v-divider />
+				<div class="px-4">
+					<v-divider class="my-4" />
+				</div>
 				<AuiSetting title="App Credentials">
 					<template #help>
 						To enable AdminUI to connect with your Xero account, you must create an app and then enter its
@@ -80,16 +92,6 @@
 				<div class="px-4">
 					<v-divider class="my-4" />
 				</div>
-				<AuiSetting
-					title="Xero Settings"
-					help="These settings control the interactions between AdminUI and Xero"
-				>
-					<AuiInputText
-						v-model="form.xero_reference_prefix"
-						label="Reference Prefix"
-						hint="When creating invoices, this will be prefixed to the Xero order reference"
-					/>
-				</AuiSetting>
 			</v-card>
 		</v-col>
 		<v-col cols="3">
@@ -182,6 +184,8 @@ const props = defineProps({
 		default: () => []
 	}
 });
+
+console.log(props.failedOrderSyncs);
 
 const { copy, copied, isSupported } = useClipboard({ source: () => props.xeroCallback });
 

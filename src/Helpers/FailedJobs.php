@@ -15,7 +15,7 @@ class FailedJobs
 
             return $failed->map(function ($failed) {
                 return self::parseFailedJob((array) $failed);
-            })->all();
+            })->values()->all();
         });
     }
 

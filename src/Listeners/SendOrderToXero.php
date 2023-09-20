@@ -16,16 +16,8 @@ use AdminUI\AdminUIXero\Facades\XeroContact;
 use AdminUI\AdminUIXero\Facades\XeroInvoice;
 use AdminUI\AdminUIXero\Facades\XeroPayment;
 
-class SendOrderToXero implements ShouldQueue
+class SendOrderToXero extends BaseXeroListener
 {
-    use InteractsWithQueue, Dispatchable, SerializesModels, Queueable;
-
-    /**
-     * The number of times the queued listener may be attempted.
-     *
-     * @var int
-     */
-    public $tries = 5;
 
     /**
      * Create a new job instance.
@@ -78,26 +70,6 @@ class SendOrderToXero implements ShouldQueue
         $xero->notes = ($order->admin_notes != '' ? $order->admin_notes . '<br/>' : $order->admin_notes) . 'Xero Invoice Number: ' . $invoice['invoice_number'];
         $xero->save();
 
-        // now the payment. Only process payments that have been done online, or have a transaction_id.
-        foreach ($order->payments as $payment) {
-            if ($payment->transaction_id != '') {
-                $payment = XeroPayment::syncPayment($payment, $order->process_id);
-            }
-        }
-
         info($order->id . ' was succesfully pushed to Xero with Xero invoice of ' . $invoice['invoice_number']);
-    }
-
-    /**
-     * Handle a job failure.
-     */
-    public function failed(Throwable $exception): void
-    {
-        Log::error("Order failed to push to Xero");
-        /* Mail::to('k.turner@evomark.co.uk')
-            ->send(new GenericEmail(
-                config('app.name') . ': Order failed to push to Xero',
-                json_encode($this->event, JSON_PRETTY_PRINT)
-            )); */
     }
 }

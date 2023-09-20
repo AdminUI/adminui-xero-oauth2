@@ -8,8 +8,15 @@ use AdminUI\AdminUIXero\Facades\Xero;
 
 class XeroPaymentService
 {
+    /**
+     * @throws \Exception;
+     */
     public function syncPayment(Payment $payment, string $processId = null): \XeroAPI\XeroPHP\Models\Accounting\Payment
     {
+        if (!$processId) {
+            throw new \Exception("AdminUI Xero: Can't sync this payment since the order hasn't been processed by Xero yet");
+        }
+
         $payments = Xero::createPayment([
             'invoice' => [
                 'invoice_id' => $processId
