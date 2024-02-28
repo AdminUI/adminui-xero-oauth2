@@ -7,6 +7,7 @@ use AdminUI\AdminUIXero\Facades\Xero;
 use AdminUI\AdminUI\Models\Navigation;
 use AdminUI\AdminUI\Facades\Navigation as FacadesNavigation;
 use AdminUI\AdminUI\Controllers\AdminUI\Inertia\InertiaCoreController;
+use AdminUI\AdminUI\Enums\PaymentStatus;
 use AdminUI\AdminUI\Models\OrderStatus;
 use AdminUI\AdminUIXero\Helpers\FailedJobs;
 
@@ -40,7 +41,11 @@ class XeroSetupIntegrationController extends InertiaCoreController
                     'connected' => Xero::isConnected(),
                     'error' => $error ?? null,
                     'organisationName' => $organisationName ?? null,
-                    'username'         => $username ?? null
+                    'username'         => $username ?? null,
+                    'accounts'         => Xero::getAccounts(null, Xero::where([
+                        'Status' => \XeroAPI\XeroPHP\Models\Accounting\Account::STATUS_ACTIVE,
+                        'Type' => \XeroAPI\XeroPHP\Models\Accounting\AccountType::BANK
+                    ]))
                 ];
             },
             'failedOrderSyncs' => function () {

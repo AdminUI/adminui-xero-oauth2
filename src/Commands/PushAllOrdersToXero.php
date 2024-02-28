@@ -5,11 +5,8 @@ namespace AdminUI\AdminUIXero\Commands;
 use Illuminate\Console\Command;
 use AdminUI\AdminUI\Models\Order;
 use AdminUI\AdminUI\Traits\CliTrait;
-use AdminUI\AdminUI\Events\Public\NewOrder;
+use AdminUI\AdminUI\Events\Public\OrderCreated;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
-use AdminUI\AdminUIXero\Services\XeroContactService;
-use AdminUI\AdminUIXero\Services\XeroInvoiceService;
-use AdminUI\AdminUIXero\Services\XeroPaymentService;
 
 
 class PushAllOrdersToXero extends Command
@@ -50,7 +47,7 @@ class PushAllOrdersToXero extends Command
         $this->cliProgressStart($orders->count());
 
         foreach ($orders as $order) {
-            $event = new NewOrder($order);
+            $event = new OrderCreated($order);
             if (!$order->account) {
                 $this->cliInfo('No account for order:' . $order->id);
                 continue;

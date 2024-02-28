@@ -57,6 +57,14 @@ class ConfigurationSeeder extends Seeder
             'is_active' => true
         ]);
 
+        Config::create('xero_linked_account', [
+            'label' => 'Linked Account',
+            'section' => 'xero',
+            'type' => 'text',
+            'is_private' => true,
+            'is_active' => true
+        ]);
+
         Config::create('xero_webhook_key', [
             'label' => 'Webhook Key',
             'section' => 'xero',

@@ -5,6 +5,15 @@
 				<div class="xero-logo d-flex px-4">
 					<XeroLogo />
 				</div>
+				<div class="px-4 max-w-prose pt-8">
+					<v-slide-y-transition>
+						<div v-if="!form.xero_linked_account && props.xeroStatus.connected">
+							<v-alert type="warning" border="left">
+								Please select an account to link for your integration
+							</v-alert>
+						</div>
+					</v-slide-y-transition>
+				</div>
 				<AuiSetting
 					title="Sync Orders"
 					help="When enabled, orders placed through AdminUI will be automatically pushed to the linked Xero account"
@@ -12,7 +21,7 @@
 					<v-switch
 						v-model="form.xero_sync_orders"
 						label="Sync Orders"
-						:disabled="!props.xeroStatus.connected"
+						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
 					/>
 				</AuiSetting>
 				<AuiSetting
@@ -22,7 +31,7 @@
 					<v-switch
 						v-model="form.xero_sync_contacts"
 						label="Sync Contacts"
-						:disabled="!props.xeroStatus.connected"
+						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
 					/>
 				</AuiSetting>
 				<AuiSetting
@@ -32,7 +41,7 @@
 					<v-switch
 						v-model="form.xero_sync_payments"
 						label="Sync Payments"
-						:disabled="!props.xeroStatus.connected"
+						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
 					/>
 				</AuiSetting>
 				<div class="px-4">
@@ -46,6 +55,19 @@
 					</template>
 					<AuiInputText v-model="form.xero_client_id" label="Client ID" />
 					<AuiInputPassword v-model="form.xero_client_secret" label="Client Secret" />
+				</AuiSetting>
+				<AuiSetting
+					title="Linked Xero Account"
+					help="Select the account on your connected Xero account with which you want to sync."
+				>
+					<AuiInputAutocomplete
+						v-model="form.xero_linked_account"
+						label="Account"
+						:items="props.xeroStatus.accounts"
+						item-text="Name"
+						item-value="AccountID"
+						clearable
+					/>
 				</AuiSetting>
 				<AuiSetting
 					title="Webhooks"
@@ -184,8 +206,6 @@ const props = defineProps({
 		default: () => []
 	}
 });
-
-console.log(props.failedOrderSyncs);
 
 const { copy, copied, isSupported } = useClipboard({ source: () => props.xeroCallback });
 

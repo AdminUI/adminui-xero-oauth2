@@ -2,18 +2,19 @@
 
 namespace AdminUI\AdminUIXero\Providers;
 
-use AdminUI\AdminUI\Events\Public\NewOrder;
-use AdminUI\AdminUI\Events\Public\NewPayment;
+use AdminUI\AdminUI\Events\Public\OrderCompleted;
+use AdminUI\AdminUI\Events\Public\PaymentReceived;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
+use AdminUI\AdminUIXero\Listeners\SendPaymentToXero;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-        NewOrder::class => [
+        OrderCompleted::class => [
             SendOrderToXero::class,
         ],
-        NewPayment::class => [
+        PaymentReceived::class => [
             SendPaymentToXero::class,
         ]
     ];

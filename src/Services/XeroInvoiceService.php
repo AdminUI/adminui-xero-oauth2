@@ -4,6 +4,7 @@ namespace AdminUI\AdminUIXero\Services;
 
 use Carbon\Carbon;
 use AdminUI\AdminUI\Models\Order;
+use AdminUI\AdminUI\Helpers\Money;
 use AdminUI\AdminUIXero\Facades\Xero;
 use XeroAPI\XeroPHP\Models\Accounting\Contact;
 use XeroAPI\XeroPHP\Models\Accounting\Invoice;
@@ -20,22 +21,22 @@ class XeroInvoiceService
     public function syncOrder(Order $order, Contact $contact): Invoice|bool
     {
         // confirm the order is not empty
-        if ($order->lines->count() <= 0) {
+        if ($order->orderItems->count() <= 0) {
             return false;
         }
 
         $items = [];
 
         // Translate the order lines to an invoiceable data structure
-        foreach ($order->lines as $item) {
+        foreach ($order->orderItems as $item) {
             $items[] = new LineItem([
                 'description' => $item->product_name . '(' . $item->sku_code . ')',
                 'quantity' => $item->qty,
-                'unit_amount' => $item->item_exc_tax / 100,
-                'line_amount' => $item->line_exc_tax / 100,
-                'tax_amount' => $item->line_tax / 100,
-                'account_code' => 200,
+                'unit_amount' => Money::convertToBase($item->itemPrice['exc_tax']),
+                'line_amount' => Money::convertToBase($item->linePrice['exc_tax']),
+                'tax_amount' => Money::convertToBase($item->linePrice['tax']),
                 'tax_type' => $item->tax_rate == 20 ? 'OUTPUT2' : 'NONE',
+                'account_code' => 200,
             ]);
         }
 
@@ -45,17 +46,17 @@ class XeroInvoiceService
             $items[] = new LineItem([
                 'description' => $order->postage_description == '' ? $postage->postageType->name : $order->postage_description,
                 'quantity' => 1,
-                'unit_amount' => $order->postage_exc_tax / 100,
-                'line_amount' => $order->postage_exc_tax / 100,
-                'tax_amount' => $order->postage_tax / 100,
+                'unit_amount' => Money::convertToBase($order->postagePrice['exc_tax']),
+                'line_amount' => Money::convertToBase($order->postagePrice['exc_tax']),
+                'tax_amount' => Money::convertToBase($order->postagePrice['tax']),
                 'account_code' => 200,
-                'tax_type' => $order->postage_exc_tax != $order->postage_inc_tax ? 'OUTPUT2' : 'NONE',
+                'tax_type' => $order->postagePrice['tax_rate'] == 20 ? 'OUTPUT2' : 'NONE',
             ]);
         }
 
         // Translate the address to an invoiceable data structure
         $address = $order->billing;
-        if ($order->delivery_address_id != $order->billing_address_id) {
+        if ($order->delivery_id != $order->billing_id) {
             $address = $order->delivery;
         }
         if ($address) {
@@ -73,7 +74,7 @@ class XeroInvoiceService
                 'contact_id' => $contact['contact_id'],
             ]),
             'due_date' => $due,
-            'reference' => $prefix . $order->id,
+            'reference' => $prefix . $order->invoice_id,
             'line_amount_types' => 'Exclusive',
             'line_items' => $items,
             'status' => 'AUTHORISED',

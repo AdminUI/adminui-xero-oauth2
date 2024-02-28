@@ -5,19 +5,12 @@ namespace AdminUI\AdminUIXero;
 use AdminUI\AdminUI\Models\Order;
 use AdminUI\AdminUI\Facades\Seeder;
 use Illuminate\Support\Facades\View;
-use AdminUI\AdminUIXero\Facades\Xero;
 use Illuminate\Support\ServiceProvider;
-use AdminUI\AdminUIXero\Models\XeroToken;
-use Illuminate\Console\Scheduling\Schedule;
 use AdminUI\AdminUIXero\Services\XeroService;
-use AdminUI\AdminUIXero\Commands\CopyContacts;
-use AdminUI\AdminUIXero\Commands\InstallAUIXero;
 use AdminUI\AdminUIXero\Services\XeroContactService;
 use AdminUI\AdminUIXero\Services\XeroInvoiceService;
 use AdminUI\AdminUIXero\Services\XeroPaymentService;
-use Illuminate\Contracts\Support\DeferrableProvider;
 use AdminUI\AdminUIXero\Commands\PushAllOrdersToXero;
-use AdminUI\AdminUIXero\Providers\XeroServiceProvider;
 use AdminUI\AdminUIXero\Providers\EventServiceProvider;
 use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
 use AdminUI\AdminUIXero\Providers\ConfigServiceProvider;
@@ -34,6 +27,7 @@ class Provider extends ServiceProvider
     public function register()
     {
         $this->app->register(ConfigServiceProvider::class);
+        $this->app->register(EventServiceProvider::class);
         $this->app->register(\Webfox\Xero\XeroServiceProvider::class);
         $this->registerFacades();
 

@@ -2,35 +2,20 @@
 
 namespace AdminUI\AdminUIXero\Listeners;
 
-use Throwable;
-use Illuminate\Bus\Queueable;
+use AdminUI\AdminUI\Events\Public\OrderCompleted;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use AdminUI\AdminUI\Mail\GenericEmail;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use AdminUI\AdminUI\Events\Public\NewOrder;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use AdminUI\AdminUIXero\Facades\XeroContact;
 use AdminUI\AdminUIXero\Facades\XeroInvoice;
-use AdminUI\AdminUIXero\Facades\XeroPayment;
 
 class SendOrderToXero extends BaseXeroListener
 {
-
-    /**
-     * Create a new job instance.
-     */
-    public function __construct(public NewOrder $event)
-    {
-    }
-
     /**
      * Handle the event to push an order to xero
      */
-    public function handle(): void
+    public function handle(OrderCompleted $event): void
     {
+        Log::debug("SendOrderToXero handler");
+        Log::debug($event->order->toArray());
         // This will push the order to xero
         // Check that Xero Push is enabled in Settings
         $xeroSyncOrders = auiSetting('xero_sync_orders', false);
@@ -39,9 +24,11 @@ class SendOrderToXero extends BaseXeroListener
         if (!$xeroSyncOrders) {
             return;
         }
-        $order = $this->event->order;
+        $order = $event->order;
 
-        $xero = $order->integration()->type('xero')->firstOrNew();
+        $xero = $order->integrations()->type('xero')->firstOrNew([], [
+            'type' => 'xero'
+        ]);
 
         if (empty($order->account)) {
             Log::error('Order ' . $order->id . ' failed to sync to Xero because it\'s missing a linked account');

@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 import viteBasicSslPlugin from "@vitejs/plugin-basic-ssl";
 
 export default defineConfig(({ mode }) => {
-	const env = loadEnv(mode, resolve("../../../"));
+	const env = loadEnv(mode, resolve(process.env.PWD, "../../../"), "VITE");
 
 	return {
 		plugins: [

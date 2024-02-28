@@ -4,9 +4,7 @@ namespace AdminUI\AdminUIXero\Commands;
 
 use Illuminate\Console\Command;
 use AdminUI\AdminUI\Models\Order;
-use AdminUI\AdminUIXero\Models\XeroToken;
-use AdminUI\AdminUI\Events\Public\NewOrder;
-use AdminUI\AdminUIXero\Facades\XeroContact;
+use AdminUI\AdminUI\Events\Public\OrderCreated;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 
 class PushOrderToXeroCommand extends Command
@@ -33,7 +31,7 @@ class PushOrderToXeroCommand extends Command
 
 
         if (!empty($order)) {
-            $event = new NewOrder($order);
+            $event = new OrderCreated($order);
             SendOrderToXero::dispatchSync($event);
             $this->info('Order has been pushed to Xero');
         } else {

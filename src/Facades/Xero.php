@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static ?string getTenantId()
  * @method static \XeroAPI\XeroPHP\Models\Accounting\Organisation getOrganisation() - Retrieves the currently connected organisation
  * @method static \XeroAPI\XeroPHP\Models\Accounting\Invoices updateOrCreateInvoices(array $data)
+ * @method static \Illuminate\Support\Collection getSettings()
  *
  * @see \AdminUI\AdminUIXero\Services\XeroService
  */

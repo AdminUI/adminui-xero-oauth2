@@ -24,7 +24,7 @@ abstract class BaseXeroListener implements ShouldQueue
     /**
      * Handle a job failure.
      */
-    public function failed(Throwable $exception): void
+    public function failed(): void
     {
         Log::error("Order failed to push to Xero");
         /* Mail::to('k.turner@evomark.co.uk')

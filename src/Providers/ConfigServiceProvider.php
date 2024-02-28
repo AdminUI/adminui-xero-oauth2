@@ -2,10 +2,6 @@
 
 namespace AdminUI\AdminUIXero\Providers;
 
-use AdminUI\AdminUIXero\Facades\Xero;
-use Illuminate\Support\Facades\App;
-use AdminUI\AdminUI\Events\NewOrder;
-use AdminUI\Xero\Models\XeroToken;
 use Illuminate\Support\ServiceProvider;
 use AdminUI\AdminUI\Models\Configuration;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
@@ -18,9 +14,11 @@ class ConfigServiceProvider extends ServiceProvider
         $clientId = Configuration::firstWhere('name', 'xero_client_id');
         $clientSecret = Configuration::firstWhere('name', 'xero_client_secret');
         $webhookKey = Configuration::firstWhere('name', 'xero_webhook_key');
+        $linkedAccount = Configuration::firstWhere('name', 'xero_linked_account');
 
         config([
             'xero.enabled' => !empty($enabled) ? $enabled->value : false,
+            'xero.linked_account' => !empty($linkedAccount) ? $linkedAccount->value : null,
             'xero.oauth.client_id' => !empty($clientId) ? $clientId->value : null,
             'xero.oauth.client_secret' => !empty($clientSecret) ? $clientSecret->value : null,
             'xero.oauth.webhook_signing_key' => !empty($webhookKey) ? $webhookKey->value : null,

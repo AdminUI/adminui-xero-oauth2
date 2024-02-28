@@ -8,7 +8,7 @@ use AdminUI\AdminUI\Facades\Flash;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
-use AdminUI\AdminUI\Events\Public\NewOrder;
+use AdminUI\AdminUI\Events\Public\OrderCreated;
 use AdminUI\AdminUI\Traits\ApiResponseTrait;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 
@@ -45,7 +45,7 @@ class XeroOrdersController extends Controller
             $order = Order::find($orderId);
             if (!$order) continue;
 
-            $event = new NewOrder($order);
+            $event = new OrderCreated($order);
             SendOrderToXero::dispatch($event);
             $count++;
         }
