@@ -1,22 +1,18 @@
 {
   "resources/index.js": {
+    "file": "assets/index-KB47ZHI0.js",
+    "src": "resources/index.js",
+    "isEntry": true,
     "dynamicImports": [
       "resources/pages/XeroSetup.vue"
-    ],
-    "file": "assets/index-fdaf6915.js",
-    "isEntry": true,
-    "src": "resources/index.js"
-  },
-  "resources/pages/XeroSetup.css": {
-    "file": "assets/XeroSetup-489cef46.css",
-    "src": "resources/pages/XeroSetup.css"
+    ]
   },
   "resources/pages/XeroSetup.vue": {
-    "css": [
-      "assets/XeroSetup-489cef46.css"
-    ],
-    "file": "assets/XeroSetup-cc35e7b2.js",
+    "file": "assets/XeroSetup-BiVWOqYo.js",
+    "src": "resources/pages/XeroSetup.vue",
     "isDynamicEntry": true,
-    "src": "resources/pages/XeroSetup.vue"
+    "css": [
+      "assets/XeroSetup-BCfikZ3s.css"
+    ]
   }
 }
