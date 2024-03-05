@@ -75,14 +75,15 @@ const props = defineProps({
 const snackbar = useSnackbar();
 const { copy } = useClipboard();
 
-const failedJobs = computed(() =>
-	props.items.map((item) => {
-		return {
-			...item,
-			failed_at: mediumDate(item.failed_at),
-			order_id: item.order.id
-		};
-	})
+const failedJobs = computed(
+	() =>
+		props.items.map((item) => {
+			return {
+				...item,
+				failed_at: mediumDate(item.failed_at),
+				order_id: item?.order?.id ?? null
+			};
+		}) ?? []
 );
 
 const selected = ref([]);

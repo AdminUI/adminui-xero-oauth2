@@ -21,6 +21,14 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
      */
     public function handle(PaymentReceived $event): void
     {
+        $paymentType = $event->payment->payment_type ?? null;
+
+        if (in_array($paymentType, ['bacs', 'cash', 'cheque', 'credit'])) {
+            Log::debug("Payment type not required to send: " . $paymentType);
+            return;
+        }
+
+
         // If the payment's order has not been turned into an invoice yet, delay this job
         $order = Order::find($event->payment->order->id);
         $xeroOrder = $order->integrations()->type('xero')->first();

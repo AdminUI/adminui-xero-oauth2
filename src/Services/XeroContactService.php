@@ -91,9 +91,9 @@ class XeroContactService
      *
      * @param string $email The email address of the person to search for
      */
-    public function getContactByEmail(string $email): \XeroAPI\XeroPHP\Models\Accounting\Contacts
+    public function getContactByEmail(string $email): \XeroAPI\XeroPHP\Models\Accounting\Contacts|null
     {
-        return Xero::getContacts(null, 'EmailAddress="' . self::clean($email) . '"');
+        return Xero::getContacts(null, 'EmailAddress="' . self::clean($email) . '"') ?? null;
     }
 
     /**
@@ -101,9 +101,9 @@ class XeroContactService
      *
      * @param string $name The name of the person to search for
      */
-    public function getContactByName(string $name): \XeroAPI\XeroPHP\Models\Accounting\Contacts
+    public function getContactByName(string $name): \XeroAPI\XeroPHP\Models\Accounting\Contacts|null
     {
-        return Xero::getContacts(null, 'Name="' . self::clean($name) . '"');
+        return Xero::getContacts(null, 'Name="' . self::clean($name) . '"') ?? null;
     }
 
     /**

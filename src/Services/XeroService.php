@@ -77,7 +77,6 @@ class XeroService
             try {
                 return $api->$method($this->getTenantId(), ...$parameters);
             } catch (ApiException $err) {
-                /*                 dd($err->getResponseObject()); */
                 Log::error("[AdminUI Xero]: Error making API call", ['message' => $err->getMessage(), 'trace' => $err->getTraceAsString()]);
                 return;
             }

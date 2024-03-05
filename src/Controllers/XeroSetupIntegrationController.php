@@ -42,10 +42,10 @@ class XeroSetupIntegrationController extends InertiaCoreController
                     'error' => $error ?? null,
                     'organisationName' => $organisationName ?? null,
                     'username'         => $username ?? null,
-                    'accounts'         => Xero::getAccounts(null, Xero::where([
+                    'accounts'         => Xero::isConnected() ? Xero::getAccounts(null, Xero::where([
                         'Status' => \XeroAPI\XeroPHP\Models\Accounting\Account::STATUS_ACTIVE,
                         'Type' => \XeroAPI\XeroPHP\Models\Accounting\AccountType::BANK
-                    ]))
+                    ])) : []
                 ];
             },
             'failedOrderSyncs' => function () {

@@ -24,11 +24,16 @@ class XeroOrdersController extends Controller
             'statuses' => ['nullable', 'array']
         ]);
 
-        $results = Order::with('lines', 'account', 'user')->whereNull('processed_at')->when(!empty($validated['date']), function ($query) use ($validated) {
-            $query->whereBetween('created_at', [$validated['date_range'][0], ($validated['date_range'][1] ?? date('Y-m-d'))]);
-        })->when(!empty($validated['statuses']), function ($query) use ($validated) {
-            $query->whereIn('order_status_id', $validated['statuses']);
-        })->orderBy('created_at', 'DESC')->get();
+        $results = Order::with(
+            'lines',
+            'account',
+            'user'
+        )->whereNull('processed_at')
+            ->when(!empty($validated['date']), function ($query) use ($validated) {
+                $query->whereBetween('created_at', [$validated['date'][0], ($validated['date'][1] ?? date('Y-m-d'))]);
+            })->when(!empty($validated['statuses']), function ($query) use ($validated) {
+                $query->whereIn('order_status_id', $validated['statuses']);
+            })->orderBy('created_at', 'DESC')->get();
 
         return $this->respondWithData($results);
     }
