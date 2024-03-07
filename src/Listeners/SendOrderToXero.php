@@ -2,7 +2,7 @@
 
 namespace AdminUI\AdminUIXero\Listeners;
 
-use AdminUI\AdminUI\Events\Public\OrderCompleted;
+use AdminUI\AdminUI\Events\Public\OrderPlaced;
 use Illuminate\Support\Facades\Log;
 use AdminUI\AdminUIXero\Facades\XeroContact;
 use AdminUI\AdminUIXero\Facades\XeroInvoice;
@@ -12,7 +12,7 @@ class SendOrderToXero extends BaseXeroListener
     /**
      * Handle the event to push an order to xero
      */
-    public function handle(OrderCompleted $event): void
+    public function handle(OrderPlaced $event): void
     {
         Log::debug("SendOrderToXero handler");
         Log::debug($event->order->toArray());

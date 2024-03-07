@@ -11,8 +11,8 @@ use AdminUI\AdminUI\Models\Configuration;
 
 class XeroService
 {
-    protected $apiInstance;
-    protected $xeroCredentials;
+    protected AccountingApi $apiInstance;
+    protected OauthCredentialManager $xeroCredentials;
 
     public function __construct()
     {

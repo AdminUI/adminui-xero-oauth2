@@ -7,6 +7,7 @@ use AdminUI\AdminUIXero\Facades\Xero;
 use AdminUI\AdminUI\Models\Navigation;
 use AdminUI\AdminUI\Facades\Navigation as FacadesNavigation;
 use AdminUI\AdminUI\Controllers\AdminUI\Inertia\InertiaCoreController;
+use AdminUI\AdminUI\Enums\PaymentMethod;
 use AdminUI\AdminUI\Enums\PaymentStatus;
 use AdminUI\AdminUI\Models\OrderStatus;
 use AdminUI\AdminUIXero\Helpers\FailedJobs;
@@ -55,7 +56,8 @@ class XeroSetupIntegrationController extends InertiaCoreController
             'tabs' => function () {
                 $integrationsNav = Navigation::firstWhere('ref', 'setup.integrations');
                 return Navigation::active()->where('parent_id', $integrationsNav->id)->get();
-            }
+            },
+            'paymentMethods' => fn () => PaymentMethod::array()
         ]);
     }
 }
