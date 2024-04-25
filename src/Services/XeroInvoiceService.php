@@ -5,10 +5,13 @@ namespace AdminUI\AdminUIXero\Services;
 use Carbon\Carbon;
 use AdminUI\AdminUI\Models\Order;
 use AdminUI\AdminUI\Helpers\Money;
+use Illuminate\Support\Facades\Log;
 use AdminUI\AdminUIXero\Facades\Xero;
 use XeroAPI\XeroPHP\Models\Accounting\Contact;
 use XeroAPI\XeroPHP\Models\Accounting\Invoice;
+use XeroAPI\XeroPHP\Models\Accounting\Invoices;
 use XeroAPI\XeroPHP\Models\Accounting\LineItem;
+use XeroAPI\XeroPHP\Models\Accounting\PaymentDelete;
 
 class XeroInvoiceService
 {
@@ -30,7 +33,7 @@ class XeroInvoiceService
         // Translate the order lines to an invoiceable data structure
         foreach ($order->orderItems as $item) {
             $items[] = new LineItem([
-                'description' => $item->product_name . '(' . $item->sku_code . ')',
+                'description' => $item->product_name . '(' . $item->orderable->sku_code . ')',
                 'quantity' => $item->qty,
                 'unit_amount' => Money::convertToBase($item->itemPrice['exc_tax']),
                 'line_amount' => Money::convertToBase($item->linePrice['exc_tax']),
@@ -81,5 +84,43 @@ class XeroInvoiceService
         ]);
         $invoices = Xero::updateOrCreateInvoices($data);
         return $invoices[0];
+    }
+
+    public function voidOrder(Order $order)
+    {
+        $xeroOrder = $order->integrations()->type('xero')->first();
+
+        /** @var Invoices $apiResponse */
+        $apiResponse = Xero::getInvoice($xeroOrder->process_id, ["payments"]);
+        $foundInvoices = $apiResponse->getInvoices();
+        $invoicesModel = new Invoices();
+        $processedInvoices = [];
+
+        foreach ($foundInvoices as $foundInvoice) {
+
+            $payments = $foundInvoice->getPayments();
+            if (!empty($payments)) {
+                foreach ($payments as $payment) {
+                    $paymentDelete = new PaymentDelete();
+                    $paymentDelete->setStatus('DELETED');
+
+                    Xero::deletePayment($payment->getPaymentId(), $paymentDelete);
+                    Log::debug("Payment " . $payment->getPaymentId() . " was deleted from invoice.");
+                }
+            }
+
+            $foundInvoice->setStatus(Invoice::STATUS_VOIDED);
+            $processedInvoices[] = $foundInvoice;
+        }
+
+        $invoicesModel->setInvoices($processedInvoices);
+        Xero::updateInvoice($xeroOrder->process_id, $invoicesModel);
+
+        if (empty($xeroOrder)) {
+            Log::debug("Order " . $order->id . " was not found in the integrations table");
+            return;
+        }
+
+        // send 'PUT' request with a 'status' : 'voided' to '/invoices/'.$xeroOrder->process_id
     }
 }

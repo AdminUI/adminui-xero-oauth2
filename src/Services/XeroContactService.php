@@ -11,29 +11,19 @@ class XeroContactService
 {
     public function getContact(Account $account): \XeroAPI\XeroPHP\Models\Accounting\Contact
     {
-        // Retrieve an existing contact if it's already been imported
-        $contact = self::getContactById($account->xero_contact_id);
 
-        // Ensure the contact account is not archived
-        if ($contact && $contact['contact_status'] == 'ARCHIVED') {
-            $account->xero_contact_id = null;
-            $account->save();
-            unset($contact);
-        }
 
-        // if a valid contact is found, return it
-        if ($contact) {
-            return $contact;
-        }
-
-        // Fall back to finding Xero contact by email address
+        // Finding Xero contact by email address
         $user = self::getUser($account);
         if ($user) {
             $contact = self::getContactByEmail($user->email);
         }
+
         if ($contact) {
             if (count($contact) == 1) {
-                self::saveContact($contact[0], $account);
+                // Contact has been found.
+                // Update the contact
+
                 return $contact[0];
             }
         }
@@ -42,7 +32,9 @@ class XeroContactService
         $contact = self::getContactByName(self::clean($account->name));
         if ($contact) {
             if (count($contact) == 1) {
-                self::saveContact($contact[0], $account);
+                // Contact has been found.
+                // Update the contact
+
                 return $contact[0];
             }
         }
@@ -115,7 +107,7 @@ class XeroContactService
         if ($addresses) {
             foreach ($addresses as $address) {
                 $add[] = [
-                    'address_type' => $address->is_billing ? 'POBOX' : 'STREET',
+                    'address_type' => $address->is_billing || $addresses->count() == 1 ? 'POBOX' : 'STREET',
                     'address_line_1' => $address->addressee ?? $account->name,
                     'address_line_2' => $address->address ?? '',
                     'address_line_3' => $address->address_2 ?? '',
@@ -145,7 +137,7 @@ class XeroContactService
                 'DAYSAFTERBILLDATE' => $account->payment_days ?? 0
             ]
         ]);
-        self::saveContact($contacts[0], $account);
+        // self::saveContact($contacts[0], $account);
         sleep(2);
         return $contacts[0];
     }
