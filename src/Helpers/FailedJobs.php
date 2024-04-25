@@ -22,7 +22,7 @@ class FailedJobs
     public static function filterByName($item)
     {
         $payload = json_decode($item->payload, true);
-        return $payload['displayName'] == 'AdminUI\AdminUIXero\Listeners\SendOrderToXero';
+        return $payload['displayName'] == \AdminUI\AdminUIXero\Listeners\SendOrderToXero::class;
     }
 
     public static function parseFailedJob(array $failed)

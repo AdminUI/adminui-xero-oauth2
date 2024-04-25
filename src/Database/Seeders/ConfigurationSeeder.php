@@ -2,6 +2,7 @@
 
 namespace AdminUI\AdminUIXero\Database\Seeders;
 
+use AdminUI\AdminUI\Enums\PaymentMethod;
 use AdminUI\AdminUI\Facades\Config;
 use Illuminate\Database\Seeder;
 use AdminUI\AdminUI\Models\Navigation;
@@ -40,6 +41,15 @@ class ConfigurationSeeder extends Seeder
             'is_private' => true,
             'is_active' => true
         ], false);
+
+        Config::create('xero_sync_payment_methods', [
+            'label' => 'Included Payment Methods',
+            'value_cast' => 'array',
+            'section' => 'xero',
+            'type' => 'select',
+            'is_private' => true,
+            'is_active' => true
+        ], PaymentMethod::values());
 
         Config::create('xero_client_id', [
             'label' => 'Client ID',

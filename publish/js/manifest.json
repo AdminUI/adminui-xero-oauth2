@@ -1,6 +1,6 @@
 {
   "resources/index.js": {
-    "file": "assets/index-a3ete1Dm.js",
+    "file": "assets/index-Bows1Fxq.js",
     "src": "resources/index.js",
     "isEntry": true,
     "dynamicImports": [
@@ -8,11 +8,11 @@
     ]
   },
   "resources/pages/XeroSetup.vue": {
-    "file": "assets/XeroSetup-CcGikPR1.js",
+    "file": "assets/XeroSetup-BQATVtJv.js",
     "src": "resources/pages/XeroSetup.vue",
     "isDynamicEntry": true,
     "css": [
-      "assets/XeroSetup-BCfikZ3s.css"
+      "assets/XeroSetup-DztNY3CE.css"
     ]
   }
 }

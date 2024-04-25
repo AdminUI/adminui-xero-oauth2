@@ -44,6 +44,19 @@
 						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
 					/>
 				</AuiSetting>
+				<AuiSetting title="Sync Payment Methods" help="Select which payments should be sent to Xero">
+					<AuiInputSelect
+						v-model="form.xero_sync_payment_methods"
+						label="Included Methods"
+						:items="paymentMethods"
+						item-text="description"
+						multiple
+						chips
+						:dense="false"
+						deletable-chips
+						:disabled="!form.xero_sync_payments"
+					/>
+				</AuiSetting>
 				<div class="px-4">
 					<v-divider class="my-4" />
 				</div>
@@ -194,6 +207,10 @@ const props = defineProps({
 		default: ""
 	},
 	xeroSettings: {
+		type: Array,
+		default: () => []
+	},
+	paymentMethods: {
 		type: Array,
 		default: () => []
 	},

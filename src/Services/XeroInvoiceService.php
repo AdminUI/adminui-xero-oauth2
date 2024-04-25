@@ -33,7 +33,7 @@ class XeroInvoiceService
         // Translate the order lines to an invoiceable data structure
         foreach ($order->orderItems as $item) {
             $items[] = new LineItem([
-                'description' => $item->product_name . '(' . $item->orderable->sku_code . ')',
+                'description' => $item->product_name . ' (' . $item->orderable->sku_code . ')',
                 'quantity' => $item->qty,
                 'unit_amount' => Money::convertToBase($item->itemPrice['exc_tax']),
                 'line_amount' => Money::convertToBase($item->linePrice['exc_tax']),
@@ -47,7 +47,7 @@ class XeroInvoiceService
         $postage = $order->postageRate;
         if ($postage) {
             $items[] = new LineItem([
-                'description' => $order->postage_description == '' ? $postage->postageType->name : $order->postage_description,
+                'description' => ($postage->postageType->name ?? 'Postage') . ' (WEBPOST-' . $order->postage_rate_id . ')',
                 'quantity' => 1,
                 'unit_amount' => Money::convertToBase($order->postagePrice['exc_tax']),
                 'line_amount' => Money::convertToBase($order->postagePrice['exc_tax']),

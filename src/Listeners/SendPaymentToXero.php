@@ -23,7 +23,7 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
     {
         $paymentType = $event->payment->payment_type ?? null;
 
-        if (in_array($paymentType, ['bacs', 'cash', 'cheque', 'credit'])) {
+        if (in_array($paymentType, auiSetting('xero_sync_payment_methods') ?? []) === false) {
             Log::debug("Payment type not required to send: " . $paymentType);
             return;
         }

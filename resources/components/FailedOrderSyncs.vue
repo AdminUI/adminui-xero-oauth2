@@ -46,6 +46,9 @@
 				</template>
 			</v-data-table>
 			<template #actions>
+				<v-btn color="error" text :disabled="selected.length === 0" @click="deleteSelectedJobs"
+					>Delete Selected</v-btn
+				>
 				<v-spacer />
 				<v-btn color="primary" :disabled="selected.length === 0" @click="retrySelectedJobs"
 					>Retry Selected</v-btn
@@ -78,6 +81,7 @@ const { copy } = useClipboard();
 const failedJobs = computed(
 	() =>
 		props.items.map((item) => {
+			if (!item.order) item.order = { lines: [] };
 			return {
 				...item,
 				failed_at: mediumDate(item.failed_at),
@@ -90,6 +94,20 @@ const selected = ref([]);
 const retrySelectedJobs = () => {
 	router.post(
 		route("admin.setup.integrations.xero.orders.retry"),
+		{
+			selected: selected.value.map((item) => item.id)
+		},
+		{
+			onSuccess() {
+				emit("input", false);
+			}
+		}
+	);
+};
+
+const deleteSelectedJobs = () => {
+	router.post(
+		route("admin.setup.integrations.xero.orders.delete"),
 		{
 			selected: selected.value.map((item) => item.id)
 		},

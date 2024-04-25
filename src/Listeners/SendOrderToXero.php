@@ -57,6 +57,6 @@ class SendOrderToXero extends BaseXeroListener
         $xero->notes = ($order->admin_notes != '' ? $order->admin_notes . '<br/>' : $order->admin_notes) . 'Xero Invoice Number: ' . $invoice['invoice_number'];
         $xero->save();
 
-        info($order->id . ' was succesfully pushed to Xero with Xero invoice of ' . $invoice['invoice_number']);
+        info($order->id . ' was successfully pushed to Xero with Xero invoice of ' . $invoice['invoice_number']);
     }
 }

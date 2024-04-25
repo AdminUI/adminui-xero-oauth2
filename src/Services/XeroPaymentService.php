@@ -20,8 +20,6 @@ class XeroPaymentService
             throw new \Exception("AdminUI Xero: Can't sync this payment without a linked account selected");
         }
 
-        // dd(Xero::getInvoice($processId), $paymentModel->order->orderTotal);
-
         $invoice = new \XeroAPI\XeroPHP\Models\Accounting\Invoice;
         $invoice->setInvoiceId($processId);
 

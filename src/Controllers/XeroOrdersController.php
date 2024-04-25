@@ -79,4 +79,24 @@ class XeroOrdersController extends Controller
 
         return back();
     }
+
+    public function delete(Request $request)
+    {
+        $validated = $request->validate([
+            'selected' => ['required', 'array'],
+            'selected.*' => ['required', 'string']
+        ]);
+
+        $count = 0;
+        foreach ($validated['selected'] as $jobId) {
+            if (!$jobId) continue;
+            Artisan::call('queue:forget ' . $jobId);
+            $count++;
+        }
+
+        Cache::forget('failed_order_syncs');
+        Flash::success($count . ' jobs were successfully deleted from the queue', 'Jobs Deleted');
+
+        return back();
+    }
 }

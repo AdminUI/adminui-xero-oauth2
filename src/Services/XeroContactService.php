@@ -3,9 +3,10 @@
 namespace AdminUI\AdminUIXero\Services;
 
 use Illuminate\Support\Str;
+use AdminUI\AdminUI\Models\User;
 use AdminUI\AdminUI\Models\Account;
 use AdminUI\AdminUIXero\Facades\Xero;
-use AdminUI\AdminUI\Models\User;
+use XeroAPI\XeroPHP\Models\Accounting\Address;
 
 class XeroContactService
 {
@@ -15,29 +16,29 @@ class XeroContactService
 
         // Finding Xero contact by email address
         $user = self::getUser($account);
-        if ($user) {
-            $contact = self::getContactByEmail($user->email);
-        }
+        // if ($user) {
+        //     $contact = self::getContactByEmail($user->email);
+        // }
 
-        if ($contact) {
-            if (count($contact) == 1) {
-                // Contact has been found.
-                // Update the contact
+        // if ($contact) {
+        //     if (count($contact) == 1) {
+        //         // Contact has been found.
+        //         // Update the contact
 
-                return $contact[0];
-            }
-        }
+        //         return $contact[0];
+        //     }
+        // }
 
-        // did nt have a matching email , try to match account name
-        $contact = self::getContactByName(self::clean($account->name));
-        if ($contact) {
-            if (count($contact) == 1) {
-                // Contact has been found.
-                // Update the contact
+        // // did nt have a matching email , try to match account name
+        // $contact = self::getContactByName(self::clean($account->name));
+        // if ($contact) {
+        //     if (count($contact) == 1) {
+        //         // Contact has been found.
+        //         // Update the contact
 
-                return $contact[0];
-            }
-        }
+        //         return $contact[0];
+        //     }
+        // }
 
         // definitely does not exist, create a new contact
         return self::createContact($account, $user);
@@ -103,30 +104,28 @@ class XeroContactService
      */
     public function createContact(Account $account, User $user): \XeroAPI\XeroPHP\Models\Accounting\Contact
     {
-        $addresses = $account->addresses;
-        if ($addresses) {
-            foreach ($addresses as $address) {
-                $add[] = [
-                    'address_type' => $address->is_billing || $addresses->count() == 1 ? 'POBOX' : 'STREET',
-                    'address_line_1' => $address->addressee ?? $account->name,
-                    'address_line_2' => $address->address ?? '',
-                    'address_line_3' => $address->address_2 ?? '',
-                    'city' => $address->town ?? '',
-                    'region' => $address->county ?? '',
-                    'postal_code' => $address->postcode,
-                    'country' => $address->country->name ?? 'United Kingdom'
-                ];
-            }
-        }
+        $billingAddress = $account->addresses->sortByDesc('is_billing')->first();
+        $addresses[] = new Address([
+            'address_type' => 'POBOX',
+            'address_line1' => $billingAddress->address ?? '',
+            'address_line2' => $billingAddress->address_2 ?? '',
+            'city' => $billingAddress->town ?? '',
+            'region' => $billingAddress->county ?? '',
+            'postal_code' => $billingAddress->postcode,
+            'country' => $billingAddress->country->name ?? 'United Kingdom',
+            'attention_to' => $billingAddress->addressee ?? $account->name ?? ''
+        ]);
 
-        $contacts = Xero::updateOrCreateContacts([
+        $contactsToSend = new \XeroAPI\XeroPHP\Models\Accounting\Contacts;
+        $contact = new \XeroAPI\XeroPHP\Models\Accounting\Contact([
+            'contact_id' => $account->xero_contact_id,
             'name' => $account->name,
             'contact_number' => 'AUI' . $account->id,
             'email_address' => $user->email ?? 'noemail@' . Str::slug($account->name) . 'co.uk',
             'first_name' => $user->first_name ?? $account->name,
             'last_name' => $user->last_name ?? '',
             'tax_number' => $account->tax_number,
-            'addresses' => $add ?? [],
+            'addresses' => $addresses,
             'phones' => [
                 [
                     'phone_type' => 'DEFAULT',
@@ -137,8 +136,10 @@ class XeroContactService
                 'DAYSAFTERBILLDATE' => $account->payment_days ?? 0
             ]
         ]);
+        $contactsToSend->setContacts([$contact]);
+
+        $contacts = Xero::updateOrCreateContacts($contactsToSend);
         // self::saveContact($contacts[0], $account);
-        sleep(2);
         return $contacts[0];
     }
 
