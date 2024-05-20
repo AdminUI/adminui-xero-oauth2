@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use XeroAPI\XeroPHP\Api\AccountingApi;
 use Webfox\Xero\OauthCredentialManager;
 use AdminUI\AdminUI\Models\Configuration;
+use Illuminate\Support\Facades\Storage;
 
 class XeroService
 {
@@ -15,6 +16,16 @@ class XeroService
     protected OauthCredentialManager $xeroCredentials;
 
     public function __construct()
+    {
+        try {
+            $this->resolveDependencies();
+        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $error) {
+            Storage::delete('xero.json');
+            $this->resolveDependencies();
+        }
+    }
+
+    private function resolveDependencies()
     {
         $this->apiInstance = resolve(AccountingApi::class);
         $this->xeroCredentials = resolve(OauthCredentialManager::class);
