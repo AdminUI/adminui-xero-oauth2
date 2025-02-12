@@ -8,7 +8,7 @@
 				<div class="px-4 max-w-prose pt-8">
 					<v-slide-y-transition>
 						<div v-if="!form.xero_linked_account && props.xeroStatus.connected">
-							<v-alert type="warning" border="left">
+							<v-alert type="warning" border="start">
 								Please select an account to link for your integration
 							</v-alert>
 						</div>
@@ -49,7 +49,7 @@
 						v-model="form.xero_sync_payment_methods"
 						label="Included Methods"
 						:items="paymentMethods"
-						item-text="description"
+						item-title="description"
 						multiple
 						chips
 						:dense="false"
@@ -77,7 +77,7 @@
 						v-model="form.xero_linked_account"
 						label="Account"
 						:items="props.xeroStatus.accounts"
-						item-text="Name"
+						item-title="Name"
 						item-value="AccountID"
 						clearable
 					/>
@@ -95,15 +95,19 @@
 					title="Your Xero App URLs"
 					help="Xero requires you to register a few URLs with them for full integration. The first is the URL to use when a connection attempt is complete. The second is the URL to send Webhook deliveries."
 				>
-					<v-simple-table show-hover>
+					<v-table show-hover>
 						<tbody>
 							<tr>
 								<td>Redirect URL:</td>
 								<td>
 									<strong>{{ props.xeroCallback }}</strong>
-									<v-btn v-if="isSupported" icon small class="ml-2" @click="copy()">
-										<v-icon small>mdi-content-copy</v-icon>
-									</v-btn>
+									<v-btn
+										v-if="isSupported"
+										icon="mdi-content-copy"
+										size="small"
+										class="ml-2"
+										@click="copy()"
+									/>
 								</td>
 							</tr>
 							<tr>
@@ -112,17 +116,15 @@
 									<strong>{{ props.xeroWebhookDeliveryURL }}</strong>
 									<v-btn
 										v-if="isSupported"
-										icon
-										small
+										icon="mdi-content-copy"
+										size="small"
 										class="ml-2"
 										@click="copy(props.xeroWebhookDeliveryURL)"
-									>
-										<v-icon small>mdi-content-copy</v-icon>
-									</v-btn>
+									/>
 								</td>
 							</tr>
 						</tbody>
-					</v-simple-table>
+					</v-table>
 				</AuiSetting>
 				<div class="px-4">
 					<v-divider class="my-4" />
@@ -141,45 +143,48 @@
 						Connected as <strong>{{ props.xeroStatus.organisationName }}</strong> via
 						{{ props.xeroStatus.username }}
 					</p>
-					<v-btn text color="primary" block :href="route('xero.auth.authorize')">Reconnect to Xero</v-btn>
+					<v-btn variant="text" color="primary" block :href="route('xero.auth.authorize')"
+						>Reconnect to Xero</v-btn
+					>
 				</template>
 				<template v-else>
-					<p class="text-center text-h6"><v-icon class="mr-4">mdi-flash-off</v-icon>Not Connected</p>
+					<p class="text-center text-h6 mb-2">
+						<v-icon class="mr-4">mdi-flash-off</v-icon>
+						Not Connected
+					</p>
 					<v-btn color="primary" block :href="route('xero.auth.authorize')">Connect to Xero</v-btn>
 				</template>
 			</AuiCard>
-			<AuiCard title="Actions" class="my-8">
+			<AuiCard title="Actions" class="my-8" content-class="px-0">
 				<v-list>
-					<v-list-item :disabled="!props.xeroStatus.connected" @click.stop="showOrderSyncFlow = true">
-						<v-list-item-icon>
+					<v-list-item @click.stop="showOrderSyncFlow = true">
+						<template #prepend>
 							<v-icon>mdi-book-sync</v-icon>
-						</v-list-item-icon>
-						<v-list-item-content>
-							<v-list-item-title>Manually Sync Orders</v-list-item-title>
-						</v-list-item-content>
+						</template>
+
+						<v-list-item-title>Manually Sync Orders</v-list-item-title>
 					</v-list-item>
 					<v-list-item
 						:disabled="!props.xeroStatus.connected || props.failedOrderSyncs.length === 0"
 						@click.stop="showFailedSyncsFlow = true"
 					>
-						<v-list-item-icon>
+						<template #prepend>
 							<v-icon color="error">mdi-sync-alert</v-icon>
-						</v-list-item-icon>
-						<v-list-item-content>
-							<v-list-item-title>
-								<v-badge
-									:content="props.failedOrderSyncs.length"
-									overlap
-									right
-									inline
-									class="mt-0"
-									color="error"
-									:value="props.failedOrderSyncs.length > 0"
-								>
-									<span>View Failed Order Syncs</span>
-								</v-badge>
-							</v-list-item-title>
-						</v-list-item-content>
+						</template>
+
+						<v-list-item-title>
+							<span>View Failed Order Syncs</span>
+						</v-list-item-title>
+						<template #append>
+							<v-badge
+								:content="props.failedOrderSyncs.length"
+								location="right"
+								inline
+								class="mt-0"
+								color="error"
+								:model-value="props.failedOrderSyncs.length > 0"
+							/>
+						</template>
 					</v-list-item>
 				</v-list>
 			</AuiCard>
@@ -200,28 +205,28 @@ const route = useRoute();
 const props = defineProps({
 	xeroCallback: {
 		type: String,
-		default: ""
+		default: "",
 	},
 	xeroWebhookDeliveryURL: {
 		type: String,
-		default: ""
+		default: "",
 	},
 	xeroSettings: {
 		type: Array,
-		default: () => []
+		default: () => [],
 	},
 	paymentMethods: {
 		type: Array,
-		default: () => []
+		default: () => [],
 	},
 	xeroStatus: {
 		type: Object,
-		default: () => ({})
+		default: () => ({}),
 	},
 	failedOrderSyncs: {
 		type: Array,
-		default: () => []
-	}
+		default: () => [],
+	},
 });
 
 const { copy, copied, isSupported } = useClipboard({ source: () => props.xeroCallback });

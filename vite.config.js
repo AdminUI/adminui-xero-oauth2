@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import laravel from "laravel-vite-plugin";
-import vue from "@vitejs/plugin-vue2";
+import vue from "@vitejs/plugin-vue";
 import AdminUI from "vite-plugin-adminui";
 import { resolve } from "node:path";
 import viteBasicSslPlugin from "@vitejs/plugin-basic-ssl";
@@ -14,28 +14,29 @@ export default defineConfig(({ mode }) => {
 				input: "./resources/index.js",
 				publicDirectory: "publish/js",
 				hotFile: "publish/js/hot",
-				buildDirectory: "vendor/adminui-xero-oauth2"
+				buildDirectory: "vendor/adminui-xero-oauth2",
 			}),
 			vue({
 				template: {
 					transformAssetUrls: {
 						base: ".",
-						includeAbsolute: false
-					}
-				}
+						includeAbsolute: false,
+					},
+				},
 			}),
 			AdminUI(),
-			env.VITE_HTTPS ? viteBasicSslPlugin() : undefined
+			env.VITE_HTTPS ? viteBasicSslPlugin() : undefined,
 		],
 		build: {
 			emptyOutDir: true,
-			outDir: "./publish/js"
+			outDir: "./publish/js",
 		},
 		server:
 			mode === "development"
 				? {
-						host: env.VITE_DEV_SERVER_HOST
+						host: env.VITE_SERVER_HOST,
+						cors: true,
 				  }
-				: {}
+				: {},
 	};
 });

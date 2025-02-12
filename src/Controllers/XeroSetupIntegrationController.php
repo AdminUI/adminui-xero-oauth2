@@ -3,14 +3,15 @@
 namespace AdminUI\AdminUIXero\Controllers;
 
 use Inertia\Inertia;
+use AdminUI\AdminUI\Models\Order;
 use AdminUI\AdminUIXero\Facades\Xero;
 use AdminUI\AdminUI\Models\Navigation;
-use AdminUI\AdminUI\Facades\Navigation as FacadesNavigation;
-use AdminUI\AdminUI\Controllers\AdminUI\Inertia\InertiaCoreController;
+use AdminUI\AdminUI\Models\OrderStatus;
 use AdminUI\AdminUI\Enums\PaymentMethod;
 use AdminUI\AdminUI\Enums\PaymentStatus;
-use AdminUI\AdminUI\Models\OrderStatus;
 use AdminUI\AdminUIXero\Helpers\FailedJobs;
+use AdminUI\AdminUI\Facades\Navigation as FacadesNavigation;
+use AdminUI\AdminUI\Controllers\AdminUI\Inertia\InertiaCoreController;
 
 class XeroSetupIntegrationController extends InertiaCoreController
 {
@@ -25,9 +26,9 @@ class XeroSetupIntegrationController extends InertiaCoreController
             'title' => 'Xero Integration Setup'
         ]);
         return Inertia::render('xero::XeroSetup', [
-            'xeroCallback' => fn () => route('xero.auth.callback'),
-            'xeroWebhookDeliveryURL' => fn () => route('admin.webhooks.integrations.xero'),
-            'xeroSettings' => fn () => Xero::getSettings(),
+            'xeroCallback' => fn() => route('xero.auth.callback'),
+            'xeroWebhookDeliveryURL' => fn() => route('admin.webhooks.integrations.xero'),
+            'xeroSettings' => fn() => Xero::getSettings(),
             'xeroStatus' => function () {
                 try {
                     if (Xero::isConnected()) {
@@ -52,12 +53,22 @@ class XeroSetupIntegrationController extends InertiaCoreController
             'failedOrderSyncs' => function () {
                 return FailedJobs::getFailedJobs();
             },
-            'orderStatuses' => fn () => OrderStatus::active()->orderBy('sort_order')->get(),
+            'failedOrders' => function () {
+                return Order::whereDoesntHave('integrations', function ($query) {
+                    $query->where('type', 'xero');
+                })
+                    ->whereNotNull('invoice_id')
+                    ->select('id', 'invoice_id', 'completed_at')
+                    ->latest()
+                    ->take(10)
+                    ->get();
+            },
+            'orderStatuses' => fn() => OrderStatus::active()->orderBy('sort_order')->get(),
             'tabs' => function () {
                 $integrationsNav = Navigation::firstWhere('ref', 'setup.integrations');
                 return Navigation::active()->where('parent_id', $integrationsNav->id)->get();
             },
-            'paymentMethods' => fn () => PaymentMethod::array()
+            'paymentMethods' => fn() => PaymentMethod::array()
         ]);
     }
 }

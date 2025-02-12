@@ -1,10 +1,9 @@
-<template functional>
+<template>
 	<svg
 		role="img"
 		aria-labelledby="nav-navigation-3043-XeroLogoTitle-5 nav-navigation-3043-XeroLogoDesc-6"
 		viewBox="0 0 53 53"
 		fill="none"
-		:class="data.staticClass"
 	>
 		<path
 			d="M26.4992 0.0527344C11.8623 0.0527344 0 11.7617 0 26.204C0 40.6452 11.8623 52.3554 26.4992 52.3554C41.1318 52.3554 53 40.6452 53 26.204C53 11.7617 41.1318 0.0527344 26.4992 0.0527344Z"

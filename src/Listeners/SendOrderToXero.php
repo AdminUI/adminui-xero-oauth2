@@ -3,6 +3,7 @@
 namespace AdminUI\AdminUIXero\Listeners;
 
 use Illuminate\Support\Facades\Log;
+use AdminUI\AdminUIXero\Facades\Xero;
 use AdminUI\AdminUIXero\Facades\XeroContact;
 use AdminUI\AdminUIXero\Facades\XeroInvoice;
 use AdminUI\AdminUI\Events\Public\OrderPlaced;
@@ -21,7 +22,7 @@ class SendOrderToXero extends BaseXeroListener
         $xeroSyncOrders = auiSetting('xero_sync_orders', false);
 
         // Run checks to see if Xero push is required for this order
-        if (!$xeroSyncOrders) {
+        if (!$xeroSyncOrders || !Xero::isConnected()) {
             return;
         }
         $order = $event->order;

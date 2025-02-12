@@ -2,11 +2,10 @@
 
 namespace AdminUI\AdminUIXero\Listeners;
 
-use Illuminate\Support\Carbon;
-use AdminUI\AdminUI\Models\Order;
 use Illuminate\Support\Facades\Log;
-use AdminUI\AdminUI\Events\Public\OrderCancelled;
+use AdminUI\AdminUIXero\Facades\Xero;
 use AdminUI\AdminUIXero\Facades\XeroInvoice;
+use AdminUI\AdminUI\Events\Public\OrderCancelled;
 
 class CancelOrderToXero extends BaseXeroListener
 {
@@ -15,6 +14,9 @@ class CancelOrderToXero extends BaseXeroListener
      */
     public function handle(OrderCancelled $event): void
     {
+        if (!Xero::isConnected()) {
+            return;
+        }
 
         XeroInvoice::voidOrder($event->order);
         Log::debug("Order " . $event->order->id . " was voided on Xero");

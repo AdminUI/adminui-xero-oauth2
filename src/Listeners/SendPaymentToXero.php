@@ -5,6 +5,7 @@ namespace AdminUI\AdminUIXero\Listeners;
 use Illuminate\Support\Carbon;
 use AdminUI\AdminUI\Models\Order;
 use Illuminate\Support\Facades\Log;
+use AdminUI\AdminUIXero\Facades\Xero;
 use Illuminate\Queue\InteractsWithQueue;
 use AdminUI\AdminUIXero\Facades\XeroPayment;
 use AdminUI\AdminUI\Events\Public\PaymentReceived;
@@ -25,6 +26,10 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
 
         if (in_array($paymentType, auiSetting('xero_sync_payment_methods') ?? []) === false) {
             Log::debug("Payment type not required to send: " . $paymentType);
+            return;
+        }
+
+        if (Xero::isConnected()) {
             return;
         }
 

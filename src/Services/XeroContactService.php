@@ -100,6 +100,16 @@ class XeroContactService
     }
 
     /**
+     * Search Xero account for a contact by their name
+     *
+     * @param string $name The name of the person to search for
+     */
+    public function getContactByAccount(string $account): \XeroAPI\XeroPHP\Models\Accounting\Contacts|null
+    {
+        return Xero::getContacts(null, 'AccountNumber="' . self::clean($account) . '"') ?? null;
+    }
+
+    /**
      * Create a new contact on Xero
      */
     public function createContact(Account $account, User $user): \XeroAPI\XeroPHP\Models\Accounting\Contact

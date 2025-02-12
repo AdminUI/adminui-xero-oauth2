@@ -9,6 +9,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
 use AdminUI\AdminUI\Events\Public\OrderCreated;
+use AdminUI\AdminUI\Resources\Admin\OrderTableResource;
 use AdminUI\AdminUI\Traits\ApiResponseTrait;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 
@@ -26,6 +27,7 @@ class XeroOrdersController extends Controller
 
         $results = Order::with(
             'lines',
+            'lines.orderable',
             'account',
             'user'
         )->whereNull('processed_at')
@@ -35,7 +37,7 @@ class XeroOrdersController extends Controller
                 $query->whereIn('order_status_id', $validated['statuses']);
             })->orderBy('created_at', 'DESC')->get();
 
-        return $this->respondWithData($results);
+        return $this->respondWithResourceCollection(OrderTableResource::collection($results));
     }
 
     public function sync(Request $request)
