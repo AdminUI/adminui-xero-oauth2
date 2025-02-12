@@ -33,5 +33,6 @@
 				"AdminUI\\AdminUIXero\\Provider"
 			]
 		}
-	}
+	},
+	"version": "1.0.1"
 }

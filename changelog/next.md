@@ -1,1 +1,0 @@
--   **Feature**: Converted frontend to Vue3
