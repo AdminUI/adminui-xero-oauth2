@@ -131,6 +131,7 @@ class XeroContactService
             'contact_id' => $account->xero_contact_id,
             'name' => $account->name,
             'contact_number' => 'AUI' . $account->id,
+            'account_number' => 'AUI' . $account->id,
             'email_address' => $user->email ?? 'noemail@' . Str::slug($account->name) . 'co.uk',
             'first_name' => $user->first_name ?? $account->name,
             'last_name' => $user->last_name ?? '',

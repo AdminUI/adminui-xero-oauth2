@@ -29,10 +29,6 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
             return;
         }
 
-        if (Xero::isConnected()) {
-            return;
-        }
-
 
         // If the payment's order has not been turned into an invoice yet, delay this job
         $order = Order::find($event->payment->order->id);
