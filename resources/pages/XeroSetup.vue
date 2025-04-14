@@ -3,7 +3,7 @@
 		<v-col cols="9">
 			<v-card class="py-4">
 				<div class="xero-logo d-flex px-4">
-					<XeroLogo />
+					<XeroLogo style="height: 100px" />
 				</div>
 				<div class="px-4 max-w-prose pt-8">
 					<v-slide-y-transition>
@@ -138,7 +138,10 @@
 					<v-btn color="primary" block :href="route('xero.auth.authorize')">Reconnect to Xero</v-btn>
 				</template>
 				<template v-else-if="props.xeroStatus.connected">
-					<p class="text-center text-h6"><v-icon class="mr-4" color="success">mdi-flash</v-icon>Connected</p>
+					<p class="text-center text-h6">
+						<v-icon class="mr-4" color="success" icon="mdi-flash" />
+						Connected
+					</p>
 					<p class="text-center">
 						Connected as <strong>{{ props.xeroStatus.organisationName }}</strong> via
 						{{ props.xeroStatus.username }}
@@ -149,7 +152,7 @@
 				</template>
 				<template v-else>
 					<p class="text-center text-h6 mb-2">
-						<v-icon class="mr-4">mdi-flash-off</v-icon>
+						<v-icon class="mr-4" icon="mdi-flash-off" />
 						Not Connected
 					</p>
 					<v-btn color="primary" block :href="route('xero.auth.authorize')">Connect to Xero</v-btn>
@@ -189,7 +192,7 @@
 				</v-list>
 			</AuiCard>
 		</v-col>
-		<OrderSyncFlow v-model="showOrderSyncFlow" />
+		<!-- <OrderSyncFlow v-model="showOrderSyncFlow" /> -->
 		<FailedOrderSyncs v-model="showFailedSyncsFlow" :items="props.failedOrderSyncs" />
 	</v-row>
 </template>
@@ -200,6 +203,10 @@ import { useApiForm, useRoute, ref } from "adminui";
 import XeroLogo from "../components/XeroLogo.vue";
 import OrderSyncFlow from "../components/OrderSyncFlow.vue";
 import FailedOrderSyncs from "../components/FailedOrderSyncs.vue";
+
+defineOptions({
+	inheritAttrs: false,
+});
 
 const route = useRoute();
 const props = defineProps({
@@ -248,9 +255,3 @@ const showOrderSyncFlow = ref(false);
  * ******************************************* */
 const showFailedSyncsFlow = ref(false);
 </script>
-
-<style scoped>
-.xero-logo {
-	height: 100px;
-}
-</style>
