@@ -192,7 +192,7 @@
 				</v-list>
 			</AuiCard>
 		</v-col>
-		<!-- <OrderSyncFlow v-model="showOrderSyncFlow" /> -->
+		<OrderSyncFlow v-model="showOrderSyncFlow" />
 		<FailedOrderSyncs v-model="showFailedSyncsFlow" :items="props.failedOrderSyncs" />
 	</v-row>
 </template>
