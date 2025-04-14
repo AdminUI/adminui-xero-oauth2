@@ -77,9 +77,6 @@ jobs:
                     echo "changelog=next" >> $GITHUB_OUTPUT
                   fi
 
-            - name: Create ZIP for release
-              run: zip -r adminui-xero-oauth2.zip . -x "*.DS_Store*" -x ".npmrc" -x "./*.config.js" -x "*node_modules*" -x ".github/*" -x ".git/*" -x ".gitignore" -x "./resources/*"
-
             - name: Commit changes to composer.json version and changelog folder
               continue-on-error: true
               run: | 
@@ -88,6 +85,9 @@ jobs:
                   git add .
                   git commit -m "Github Action compiled resources"
                   git push
+
+            - name: Create ZIP for release
+              run: zip -r adminui-xero-oauth2.zip . -x "*.DS_Store*" -x ".npmrc" -x "./*.config.js" -x "*node_modules*" -x ".github/*" -x ".git/*" -x ".gitignore" -x "./resources/*"
 
             - name: Create Github release
               id: create_release
