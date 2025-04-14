@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
 				},
 			}),
 			AdminUI({ mode }),
-			env.VITE_HTTPS ? viteBasicSslPlugin() : undefined,
+			env.VITE_SERVER_HTTPS === "basic" ? viteBasicSslPlugin() : undefined,
 		],
 		build: {
 			emptyOutDir: true,

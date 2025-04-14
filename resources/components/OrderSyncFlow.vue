@@ -184,8 +184,7 @@ const doSync = async () => {
 				isSyncing.value = false;
 				selectedOrders.value = [];
 				filters.date = [];
-				emit("input", false);
-
+				modelValue.value = false;
 				step.value = 1;
 			},
 		}

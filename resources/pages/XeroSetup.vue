@@ -76,7 +76,7 @@
 					<AuiInputAutocomplete
 						v-model="form.xero_linked_account"
 						label="Account"
-						:items="props.xeroStatus.accounts"
+						:items="props.xeroStatus.accounts?.Accounts"
 						item-title="Name"
 						item-value="AccountID"
 						clearable

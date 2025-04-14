@@ -1,10 +1,5 @@
 <template>
-	<v-dialog
-		:model-value="props.value"
-		width="1400"
-		@update:model-value="emit('update:modelValue', $event)"
-		scrollable
-	>
+	<v-dialog v-model="modelValue" width="1400" scrollable>
 		<AuiCard title="Failed Order Syncs">
 			<v-data-table
 				v-model="selected"
@@ -51,11 +46,20 @@
 				</template>
 			</v-data-table>
 			<template #actions>
-				<v-btn color="error" variant="text" :disabled="selected.length === 0" @click="deleteSelectedJobs"
+				<v-btn
+					color="error"
+					variant="text"
+					:disabled="selected.length === 0"
+					:loading="isDeleting"
+					@click="deleteSelectedJobs"
 					>Delete Selected</v-btn
 				>
 				<v-spacer />
-				<v-btn color="primary" :disabled="selected.length === 0" @click="retrySelectedJobs"
+				<v-btn
+					color="primary"
+					:disabled="selected.length === 0"
+					:loading="isRetrying"
+					@click="retrySelectedJobs"
 					>Retry Selected</v-btn
 				>
 			</template>
@@ -68,16 +72,15 @@ import { computed, mediumDate, ref, currency, useSnackbar, router, useRoute } fr
 import { useClipboard } from "@vueuse/core";
 
 const route = useRoute();
-const emit = defineEmits(["input"]);
 const props = defineProps({
-	value: {
-		type: Boolean,
-		default: false,
-	},
 	items: {
 		type: Array,
 		required: true,
 	},
+});
+const modelValue = defineModel({
+	type: Boolean,
+	default: false,
 });
 
 const snackbar = useSnackbar();
@@ -96,29 +99,39 @@ const failedJobs = computed(
 );
 
 const selected = ref([]);
+const isRetrying = ref(false);
 const retrySelectedJobs = () => {
+	isRetrying.value = true;
 	router.post(
 		route("admin.setup.integrations.xero.orders.retry"),
 		{
-			selected: selected.value.map((item) => item.id),
+			selected: selected.value,
 		},
 		{
 			onSuccess() {
-				emit("input", false);
+				modelValue.value = false;
+			},
+			onFinish() {
+				isRetrying.value = false;
 			},
 		}
 	);
 };
 
+const isDeleting = ref(false);
 const deleteSelectedJobs = () => {
+	isDeleting.value = true;
 	router.post(
 		route("admin.setup.integrations.xero.orders.delete"),
 		{
-			selected: selected.value.map((item) => item.id),
+			selected: selected.value,
 		},
 		{
 			onSuccess() {
-				emit("input", false);
+				modelValue.value = false;
+			},
+			onFinish() {
+				isDeleting.value = true;
 			},
 		}
 	);
