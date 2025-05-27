@@ -73,7 +73,8 @@ class XeroService
      */
     public function getOrganisation()
     {
-        return $this->getOrganisations()->getOrganisations()[0];
+        $organisationsRepo = $this->getOrganisations();
+        return !empty($organisationsRepo) ? $this->getOrganisations()->getOrganisations()[0] : null;
     }
 
     /**

@@ -32,7 +32,7 @@ class XeroSetupIntegrationController extends InertiaCoreController
             'xeroStatus' => function () {
                 try {
                     if (Xero::isConnected()) {
-                        $organisationName = Xero::getOrganisation()->getName();
+                        $organisationName = Xero::getOrganisation()?->getName() ?? null;
                         $user             = Xero::getUser();
                         $username         = "{$user['given_name']} {$user['family_name']} ({$user['username']})";
                     }

@@ -47,6 +47,7 @@
 				<AuiSetting title="Sync Payment Methods" help="Select which payments should be sent to Xero">
 					<AuiInputSelect
 						v-model="form.xero_sync_payment_methods"
+						:error="formErrors.xero_sync_payment_methods"
 						label="Included Methods"
 						:items="paymentMethods"
 						item-title="description"
@@ -66,8 +67,12 @@
 						credentials here.
 						<a href="https://developer.xero.com/app/manage" target="_blank">Create Xero Application</a>
 					</template>
-					<AuiInputText v-model="form.xero_client_id" label="Client ID" />
-					<AuiInputPassword v-model="form.xero_client_secret" label="Client Secret" />
+					<AuiInputText v-model="form.xero_client_id" label="Client ID" :error="formErrors.xero_client_id" />
+					<AuiInputPassword
+						v-model="form.xero_client_secret"
+						label="Client Secret"
+						:error="formErrors.xero_client_secret"
+					/>
 				</AuiSetting>
 				<AuiSetting
 					title="Linked Xero Account"
@@ -75,6 +80,7 @@
 				>
 					<AuiInputAutocomplete
 						v-model="form.xero_linked_account"
+						:error="formErrors.xero_client_secret"
 						label="Account"
 						:items="props.xeroStatus.accounts?.Accounts"
 						item-title="Name"
@@ -246,7 +252,10 @@ const getInitialData = () => {
 	}, {});
 };
 
-let { form, formErrors } = useApiForm({ route: "admin.api.config.preferences", initialData: getInitialData() });
+let { form, formErrors } = useApiForm({
+	route: "admin.setup.site-preferences.update-value",
+	initialData: getInitialData(),
+});
 
 const showOrderSyncFlow = ref(false);
 
