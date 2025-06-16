@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Artisan;
 use AdminUI\AdminUI\Events\Public\OrderCreated;
 use AdminUI\AdminUI\Resources\Admin\OrderTableResource;
 use AdminUI\AdminUI\Traits\ApiResponseTrait;
+use AdminUI\AdminUIXero\Facades\XeroContact;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 
 
@@ -100,5 +101,11 @@ class XeroOrdersController extends Controller
         Flash::success($count . ' jobs were successfully deleted from the queue', 'Jobs Deleted');
 
         return back();
+    }
+
+    public function getCreditLimit()
+    {
+        $contact = XeroContact::getContactByAccount('AUI1000');
+        dd($contact);
     }
 }

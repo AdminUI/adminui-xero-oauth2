@@ -42,6 +42,15 @@ class ConfigurationSeeder extends Seeder
             'is_active' => true
         ], false);
 
+        Config::create('xero_use_account_balance', [
+            'label' => 'Use Account Balance',
+            'value_cast' => 'boolean',
+            'section' => 'xero',
+            'type' => 'switch',
+            'is_private' => true,
+            'is_active' => true
+        ], false);
+
         Config::create('xero_sync_payment_methods', [
             'label' => 'Included Payment Methods',
             'value_cast' => 'array',

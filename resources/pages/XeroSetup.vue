@@ -24,6 +24,7 @@
 						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
 					/>
 				</AuiSetting>
+				<VDivider />
 				<AuiSetting
 					title="Sync Contact Updates"
 					help="While contacts will initially be pushed when syncing orders, you can also choose to push changes to your accounts to Xero to update linked contacts"
@@ -34,6 +35,7 @@
 						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
 					/>
 				</AuiSetting>
+				<VDivider />
 				<AuiSetting
 					title="Sync Payments"
 					help="When enabled, orders placed through AdminUI will be automatically pushed to the linked Xero account"
@@ -44,6 +46,18 @@
 						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
 					/>
 				</AuiSetting>
+				<VDivider />
+				<AuiSetting
+					title="Use Xero Account Balance"
+					help="Instead of using the AdminUI ledger, get account balance from linked Xero customer account"
+				>
+					<v-switch
+						v-model="form.xero_use_account_balance"
+						label="Use Xero Account Balance"
+						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
+					/>
+				</AuiSetting>
+				<VDivider />
 				<AuiSetting title="Sync Payment Methods" help="Select which payments should be sent to Xero">
 					<AuiInputSelect
 						v-model="form.xero_sync_payment_methods"
@@ -58,9 +72,8 @@
 						:disabled="!form.xero_sync_payments"
 					/>
 				</AuiSetting>
-				<div class="px-4">
-					<v-divider class="my-4" />
-				</div>
+				<VDivider />
+
 				<AuiSetting title="App Credentials">
 					<template #help>
 						To enable AdminUI to connect with your Xero account, you must create an app and then enter its
@@ -74,6 +87,8 @@
 						:error="formErrors.xero_client_secret"
 					/>
 				</AuiSetting>
+				<VDivider />
+
 				<AuiSetting
 					title="Linked Xero Account"
 					help="Select the account on your connected Xero account with which you want to sync."
@@ -88,15 +103,15 @@
 						clearable
 					/>
 				</AuiSetting>
+				<VDivider />
+
 				<AuiSetting
 					title="Webhooks"
 					help="To enable AdminUI to respond to events from your Xero account, you must provide a webhook key"
 				>
 					<AuiInputPassword v-model="form.xero_webhook_key" label="Webhook Key" />
 				</AuiSetting>
-				<div class="px-4">
-					<v-divider class="my-4" />
-				</div>
+				<VDivider />
 				<AuiSetting
 					title="Your Xero App URLs"
 					help="Xero requires you to register a few URLs with them for full integration. The first is the URL to use when a connection attempt is complete. The second is the URL to send Webhook deliveries."

@@ -4,6 +4,7 @@ namespace AdminUI\AdminUIXero\Services;
 
 use Illuminate\Support\Str;
 use AdminUI\AdminUI\Models\User;
+use AdminUI\AdminUI\Helpers\Money;
 use AdminUI\AdminUI\Models\Account;
 use AdminUI\AdminUIXero\Facades\Xero;
 use XeroAPI\XeroPHP\Models\Accounting\Address;
@@ -104,9 +105,9 @@ class XeroContactService
      *
      * @param string $name The name of the person to search for
      */
-    public function getContactByAccount(string $account): \XeroAPI\XeroPHP\Models\Accounting\Contacts|null
+    public function getContactByAccount(string $accountId): \XeroAPI\XeroPHP\Models\Accounting\Contacts|null
     {
-        return Xero::getContacts(null, 'AccountNumber="' . self::clean($account) . '"') ?? null;
+        return Xero::getContacts(null, 'AccountNumber="' . self::clean($accountId) . '"') ?? null;
     }
 
     /**
@@ -171,5 +172,29 @@ class XeroContactService
     public function clean(string $string): string
     {
         return str($string)->trim()->lower();
+    }
+
+    public function getCreditLimit(Account $account): ?array
+    {
+        $contact = $this->getContactByAccount('AUI' . $account->id);
+      
+
+        $outstanding = 0;
+        $overdue = 0;
+        if (empty($contact)) {
+            return null;
+        }
+        if (isset($contact[0]['balances']['accounts_receivable'])) {
+            $outstanding = Money::convertToSubunit($contact[0]['balances']['accounts_receivable']['outstanding'] ?? 0);
+            $overdue = Money::convertToSubunit($contact[0]['balances']['accounts_receivable']['overdue']);
+        }
+        $available = $account->credit_limit - $outstanding;
+        return [
+            'credited' => 0,
+            'debited' => 0,
+            'balance' => $outstanding,
+            'overdue' => $overdue,
+            'available' => $available
+        ];
     }
 }

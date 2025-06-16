@@ -129,6 +129,7 @@ const deleteSelectedJobs = () => {
 		{
 			onSuccess() {
 				modelValue.value = false;
+				isDeleting.value = true;
 			},
 			onFinish() {
 				isDeleting.value = true;
