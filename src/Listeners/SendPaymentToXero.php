@@ -43,7 +43,7 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
             'type' => 'xero',
             'notes' => 'Recorded Xero payment against invoice ' . $xeroOrder->process_id,
             'process_id' => $payment->getPaymentId(),
-            'processed_at' => Carbon::parse($payment->getDateAsDate())
+            'processed_at' => Carbon::parse((string) $payment->getDateAsDate())
         ]);
         Log::debug("Payment sent to Xero");
     }

@@ -30,11 +30,13 @@
 				<template #item.order="{ item }">
 					<div class="d-flex flex-column">
 						<div class="text-caption">{{ item.order.lines.length }} items</div>
+
 						<div class="whitespace-nowrap">
-							<span class="font-weight-bold">Subtotal:</span> {{ currency(item.order.cart_exc_tax) }}
+							<span class="font-weight-bold">Subtotal:</span>
+							{{ currency(item.order.order_total.exc_tax) }}
 						</div>
 						<div class="whitespace-nowrap">
-							<span class="font-weight-bold">Total:</span> {{ currency(item.order.cart_inc_tax) }}
+							<span class="font-weight-bold">Total:</span> {{ currency(item.order.order_total.inc_tax) }}
 						</div>
 					</div>
 				</template>

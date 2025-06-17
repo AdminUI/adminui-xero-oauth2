@@ -76,10 +76,16 @@ class Provider extends ServiceProvider
             'mode' => 'run',
         ]);
 
-        Filters::add(Filter::ACCOUNT_SHOW_LEDGER, fn () => false);
-        Filters::add(Filter::ACCOUNT_CREDIT_INFORMATION, function ($null, Account $account) {
-            return XeroContact::getCreditLimit($account);
-        });
+        if (auiSetting('xero_use_account_balance', false)) {
+            Filters::add(Filter::ACCOUNT_SHOW_LEDGER, fn () => false);
+            Filters::add(Filter::ACCOUNT_CREDIT_INFORMATION, function ($null, Account $account) {
+                return XeroContact::getCreditLimit($account);
+            });
+            Filters::add(Filter::ACCOUNT_USE_LEDGER, function () {
+                return true;
+            });
+        }
+
     }
 
     private function pushJavascript(): void

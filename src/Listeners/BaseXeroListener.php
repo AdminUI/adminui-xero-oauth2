@@ -27,10 +27,5 @@ abstract class BaseXeroListener implements ShouldQueue
     public function failed(): void
     {
         Log::error("Order failed to push to Xero");
-        /* Mail::to('k.turner@evomark.co.uk')
-            ->send(new GenericEmail(
-                config('app.name') . ': Order failed to push to Xero',
-                json_encode($this->event, JSON_PRETTY_PRINT)
-            )); */
     }
 }
