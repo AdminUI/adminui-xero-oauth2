@@ -2,26 +2,26 @@
 
 namespace AdminUI\AdminUIXero;
 
-use AdminUI\AdminUI\Constants\Filter;
-use AdminUI\AdminUI\Models\Account;
-use AdminUI\AdminUI\Facades\Application;
-use AdminUI\AdminUI\Facades\Filters;
+use Illuminate\Foundation\Vite;
 use AdminUI\AdminUI\Facades\Seeder;
-use AdminUI\AdminUI\Models\Order;
-use AdminUI\AdminUIXero\Commands\PushAllOrdersToXero;
-use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
-use AdminUI\AdminUIXero\Database\Seeders\ConfigurationSeeder;
-use AdminUI\AdminUIXero\Database\Seeders\NavigationSeeder;
+use AdminUI\AdminUI\Models\Account;
+use AdminUI\AdminUI\Facades\Filters;
+use Illuminate\Support\Facades\View;
+use AdminUI\AdminUI\Constants\Filter;
+use Illuminate\Support\ServiceProvider;
+use AdminUI\AdminUI\Facades\Application;
 use AdminUI\AdminUIXero\Facades\XeroContact;
-use AdminUI\AdminUIXero\Providers\ConfigServiceProvider;
-use AdminUI\AdminUIXero\Providers\EventServiceProvider;
+use AdminUI\AdminUIXero\Services\XeroService;
+use function Illuminate\Filesystem\join_paths;
 use AdminUI\AdminUIXero\Services\XeroContactService;
 use AdminUI\AdminUIXero\Services\XeroInvoiceService;
 use AdminUI\AdminUIXero\Services\XeroPaymentService;
-use AdminUI\AdminUIXero\Services\XeroService;
-use function Illuminate\Filesystem\join_paths;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\ServiceProvider;
+use AdminUI\AdminUIXero\Commands\PushAllOrdersToXero;
+use AdminUI\AdminUIXero\Providers\EventServiceProvider;
+use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
+use AdminUI\AdminUIXero\Providers\ConfigServiceProvider;
+use AdminUI\AdminUIXero\Database\Seeders\NavigationSeeder;
+use AdminUI\AdminUIXero\Database\Seeders\ConfigurationSeeder;
 
 class Provider extends ServiceProvider
 {
@@ -77,7 +77,7 @@ class Provider extends ServiceProvider
         ]);
 
         if (auiSetting('xero_use_account_balance', false)) {
-            Filters::add(Filter::ACCOUNT_SHOW_LEDGER, fn () => false);
+            Filters::add(Filter::ACCOUNT_SHOW_LEDGER, fn() => false);
             Filters::add(Filter::ACCOUNT_CREDIT_INFORMATION, function ($null, Account $account) {
                 return XeroContact::getCreditLimit($account);
             });
@@ -85,15 +85,15 @@ class Provider extends ServiceProvider
                 return true;
             });
         }
-
     }
 
     private function pushJavascript(): void
     {
-        $output = \Illuminate\Support\Facades\Vite::useHotFile(base_path('vendor/adminui/adminui-xero-oauth2/publish/js/hot'))
-            ->withEntryPoints(['resources/index.js'])
-            ->useBuildDirectory('vendor/adminui-xero-oauth2')
-            ->toHtml();
+        if ($this->app->runningInConsole()) return;
+
+        $viteInstance = new Vite;
+        $viteInstance->useHotFile(base_path('vendor/adminui/adminui-xero-oauth2/publish/js/hot'));
+        $output = $viteInstance(['resources/index.js'], 'vendor/adminui-xero-oauth2');
 
         View::startPush('aui_packages', $output);
     }
