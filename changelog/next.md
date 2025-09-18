@@ -1,4 +1,0 @@
--   **Improvement**: Updated `webfox/laravel-xero-oauth2` to version 6.
--   **Improvement**: Migrated to using **model** credential store to avoid file-caching issues in queue worker.
--   **BugFix**: Styling issues left over from the Vue3 transition
--   **Chore**: Cleaned up some code.
