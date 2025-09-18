@@ -23,7 +23,7 @@ class XeroContactService
 
         // if ($contact) {
         //     if (count($contact) == 1) {
-        //         // Contact has been found.
+        //         // Contachas been found.
         //         // Update the contact
 
         //         return $contact[0];
@@ -174,10 +174,13 @@ class XeroContactService
         return str($string)->trim()->lower();
     }
 
+    /**
+     * Used by the Ledger, retrieve an account's credit limit from Xero.
+     */
     public function getCreditLimit(Account $account): ?array
     {
         $contact = $this->getContactByAccount('AUI' . $account->id);
-      
+
 
         $outstanding = 0;
         $overdue = 0;

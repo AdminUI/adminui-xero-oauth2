@@ -15,7 +15,6 @@ use AdminUI\AdminUIXero\Facades\XeroContact;
 use AdminUI\AdminUIXero\Helpers\FailedJobs;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 
-
 class XeroOrdersController extends Controller
 {
     use ApiResponseTrait;

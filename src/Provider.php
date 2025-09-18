@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\View;
 use AdminUI\AdminUI\Constants\Filter;
 use Illuminate\Support\ServiceProvider;
 use AdminUI\AdminUI\Facades\Application;
+use AdminUI\AdminUI\Models\Option;
 use AdminUI\AdminUIXero\Facades\XeroContact;
 use AdminUI\AdminUIXero\Services\XeroService;
 use function Illuminate\Filesystem\join_paths;
@@ -22,6 +23,7 @@ use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
 use AdminUI\AdminUIXero\Providers\ConfigServiceProvider;
 use AdminUI\AdminUIXero\Database\Seeders\NavigationSeeder;
 use AdminUI\AdminUIXero\Database\Seeders\ConfigurationSeeder;
+use Webfox\Xero\Xero as WebfoxXero;
 
 class Provider extends ServiceProvider
 {
@@ -36,13 +38,25 @@ class Provider extends ServiceProvider
         $this->app->register(EventServiceProvider::class);
         $this->app->register(\Webfox\Xero\XeroServiceProvider::class);
         $this->registerFacades();
-
         $this->loadRoutesFrom(__DIR__ . '/Routes/admin.php');
     }
 
     public function boot(): void
     {
         $baseDir = dirname(__DIR__);
+
+        // Prime the database to save the Xero OAuth credentials
+        $xeroCredentials = Option::firstOrCreate([
+            'optionable_type' => null,
+            'optionable_id' => null,
+            'name' => 'xero_credentials',
+        ], [
+            'cast' => 'array'
+        ]);
+        // Tell Xero to save credentials using the model instance provided
+        WebfoxXero::useModelStorage($xeroCredentials);
+        // Tell Xero to use the `value` database column
+        WebfoxXero::useAttributeOnModelStore('value');
 
         $this->registerDatabaseResources();
 
@@ -76,6 +90,7 @@ class Provider extends ServiceProvider
             'mode' => 'run',
         ]);
 
+        // If enabled, filter the AdminUI Ledger content to use Xero instead
         if (auiSetting('xero_use_account_balance', false)) {
             Filters::add(Filter::ACCOUNT_SHOW_LEDGER, fn() => false);
             Filters::add(Filter::ACCOUNT_CREDIT_INFORMATION, function ($null, Account $account) {
@@ -87,6 +102,9 @@ class Provider extends ServiceProvider
         }
     }
 
+    /**
+     * Add the package JavaScript to the stack
+     */
     private function pushJavascript(): void
     {
         if ($this->app->runningInConsole()) return;

@@ -2,6 +2,7 @@
 
 namespace AdminUI\AdminUIXero\Listeners;
 
+use Throwable;
 use Illuminate\Support\Facades\Log;
 use AdminUI\AdminUIXero\Facades\Xero;
 use AdminUI\AdminUIXero\Facades\XeroContact;
@@ -59,5 +60,10 @@ class SendOrderToXero extends BaseXeroListener
         $xero->save();
 
         info($order->id . ' was successfully pushed to Xero with Xero invoice of ' . $invoice['invoice_number']);
+    }
+
+    public function failed($event, Throwable $exception): void
+    {
+        Log::error("Failed to send order to Xero: " . $exception->getMessage());
     }
 }

@@ -1,11 +1,8 @@
 <template>
 	<v-row>
 		<v-col cols="9">
-			<v-card class="py-4">
-				<div class="xero-logo d-flex px-4">
-					<XeroLogo style="height: 100px" />
-				</div>
-				<div class="px-4 max-w-prose pt-8">
+			<VCard class="pb-4 relative">
+				<div class="px-4 max-w-prose">
 					<v-slide-y-transition>
 						<div v-if="!form.xero_linked_account && props.xeroStatus.connected">
 							<v-alert type="warning" border="start">
@@ -80,11 +77,17 @@
 						credentials here.
 						<a href="https://developer.xero.com/app/manage" target="_blank">Create Xero Application</a>
 					</template>
-					<AuiInputText v-model="form.xero_client_id" label="Client ID" :error="formErrors.xero_client_id" />
+					<AuiInputText
+						v-model="form.xero_client_id"
+						label="Client ID"
+						:error="formErrors.xero_client_id"
+						class="max-w-prose"
+					/>
 					<AuiInputPassword
 						v-model="form.xero_client_secret"
 						label="Client Secret"
 						:error="formErrors.xero_client_secret"
+						class="max-w-prose"
 					/>
 				</AuiSetting>
 				<VDivider />
@@ -101,6 +104,7 @@
 						item-title="Name"
 						item-value="AccountID"
 						clearable
+						class="max-w-prose"
 					/>
 				</AuiSetting>
 				<VDivider />
@@ -109,7 +113,7 @@
 					title="Webhooks"
 					help="To enable AdminUI to respond to events from your Xero account, you must provide a webhook key"
 				>
-					<AuiInputPassword v-model="form.xero_webhook_key" label="Webhook Key" />
+					<AuiInputPassword v-model="form.xero_webhook_key" class="max-w-prose" label="Webhook Key" />
 				</AuiSetting>
 				<VDivider />
 				<AuiSetting
@@ -121,27 +125,33 @@
 							<tr>
 								<td>Redirect URL:</td>
 								<td>
-									<strong>{{ props.xeroCallback }}</strong>
-									<v-btn
-										v-if="isSupported"
-										icon="mdi-content-copy"
-										size="small"
-										class="ml-2"
-										@click="copy()"
-									/>
+									<div class="d-flex align-center">
+										<strong>{{ props.xeroCallback }}</strong>
+										<v-btn
+											v-if="isSupported"
+											variant="text"
+											icon="mdi-content-copy"
+											size="small"
+											class="ml-2"
+											@click="copy()"
+										/>
+									</div>
 								</td>
 							</tr>
 							<tr>
 								<td>Webhook Delivery URL:</td>
 								<td>
-									<strong>{{ props.xeroWebhookDeliveryURL }}</strong>
-									<v-btn
-										v-if="isSupported"
-										icon="mdi-content-copy"
-										size="small"
-										class="ml-2"
-										@click="copy(props.xeroWebhookDeliveryURL)"
-									/>
+									<div class="d-flex align-center">
+										<strong>{{ props.xeroWebhookDeliveryURL }}</strong>
+										<v-btn
+											v-if="isSupported"
+											variant="text"
+											icon="mdi-content-copy"
+											size="small"
+											class="ml-2"
+											@click="copy(props.xeroWebhookDeliveryURL)"
+										/>
+									</div>
 								</td>
 							</tr>
 						</tbody>
@@ -150,7 +160,10 @@
 				<div class="px-4">
 					<v-divider class="my-4" />
 				</div>
-			</v-card>
+				<div class="xero-logo d-flex px-4 absolute top-4 right-0">
+					<XeroLogo style="height: 100px" />
+				</div>
+			</VCard>
 		</v-col>
 		<v-col cols="3">
 			<AuiCard title="Connection Status" class="mb-8">
@@ -243,7 +256,7 @@
 
 <script setup>
 import { useClipboard } from "@vueuse/core";
-import { useApiForm, useRoute, ref } from "adminui";
+import { useApiForm, useRoute, ref, watch, useSnackbar } from "adminui";
 import XeroLogo from "../components/XeroLogo.vue";
 import OrderSyncFlow from "../components/OrderSyncFlow.vue";
 import FailedOrderSyncs from "../components/FailedOrderSyncs.vue";
@@ -254,6 +267,7 @@ defineOptions({
 });
 
 const route = useRoute();
+const snackbar = useSnackbar();
 const props = defineProps({
 	xeroCallback: {
 		type: String,
@@ -286,6 +300,15 @@ const props = defineProps({
 });
 
 const { copy, copied, isSupported } = useClipboard({ source: () => props.xeroCallback });
+watch(copied, (v) => {
+	if (v) {
+		snackbar.add({
+			type: "success",
+			title: "Copied",
+			text: "URL was successfully copied to clipboard",
+		});
+	}
+});
 
 const getInitialData = () => {
 	return props.xeroSettings.reduce((acc, curr) => {

@@ -5,6 +5,7 @@ namespace AdminUI\AdminUIXero\Providers;
 use Illuminate\Support\ServiceProvider;
 use AdminUI\AdminUI\Models\Configuration;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
+use Webfox\Xero\Oauth2CredentialManagers\ModelStore;
 
 class ConfigServiceProvider extends ServiceProvider
 {
@@ -18,6 +19,7 @@ class ConfigServiceProvider extends ServiceProvider
 
         config([
             'xero.enabled' => !empty($enabled) ? $enabled->value : false,
+            'xero.credential_store' => ModelStore::class,
             'xero.linked_account' => !empty($linkedAccount) ? $linkedAccount->value : null,
             'xero.oauth.client_id' => !empty($clientId) ? $clientId->value : null,
             'xero.oauth.client_secret' => !empty($clientSecret) ? $clientSecret->value : null,

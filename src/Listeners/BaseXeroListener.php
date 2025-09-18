@@ -12,7 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 
 abstract class BaseXeroListener implements ShouldQueue
 {
-    use InteractsWithQueue, Dispatchable, SerializesModels, Queueable;
+    use InteractsWithQueue, SerializesModels, Queueable, Dispatchable;
 
     /**
      * The number of times the queued listener may be attempted.
@@ -24,7 +24,7 @@ abstract class BaseXeroListener implements ShouldQueue
     /**
      * Handle a job failure.
      */
-    public function failed(): void
+    public function failed(mixed $event, Throwable $exception): void
     {
         Log::error("Order failed to push to Xero");
     }

@@ -4,11 +4,14 @@ namespace AdminUI\AdminUIXero\Helpers;
 
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 use AdminUI\AdminUIXero\Listeners\SendPaymentToXero;
-use Illuminate\Support\Arr;
+use Carbon\CarbonInterval;
 use Illuminate\Support\Facades\Cache;
 
 class FailedJobs
 {
+    /**
+     * Failed jobs are cached by their target class
+     */
     public static function getCacheKey(string $class): string
     {
         return 'xero_failed_syncs__' . basename($class);
@@ -17,7 +20,7 @@ class FailedJobs
     public static function getFailedJobs($class = SendOrderToXero::class)
     {
         $cacheKey = self::getCacheKey($class);
-        return Cache::remember($cacheKey, 1/* 60 * 5 */, function () use ($class) {
+        return Cache::remember($cacheKey, CarbonInterval::minutes(5), function () use ($class) {
             $failed = collect(app()['queue.failer']->all())->filter(fn($item) => self::filterByName($item, $class));
 
             return $failed->map(function ($failed) use ($class) {
@@ -26,6 +29,9 @@ class FailedJobs
         });
     }
 
+    /**
+     * Filter the jobs to only include ones for the specified class
+     */
     public static function filterByName($item, $class)
     {
         $payload = json_decode($item->payload, true);

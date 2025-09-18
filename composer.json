@@ -6,11 +6,11 @@
 	"authors": [
 		{
 			"name": "Kenny Turner",
-			"email": "k.turner@dsmdesign.co.uk"
+			"email": "k.turner@evomark.co.uk"
 		},
 		{
 			"name": "Craig Riley",
-			"email": "c.riley@dsmdesign.co.uk"
+			"email": "c.riley@evomark.co.uk"
 		}
 	],
 	"require": {
@@ -20,7 +20,7 @@
 		"ext-json": "*",
 		"ext-fileinfo": "*",
 		"ext-curl": "*",
-		"webfox/laravel-xero-oauth2": "^4.1|^5.0"
+		"webfox/laravel-xero-oauth2": "^4.1|^5.0|^6.0"
 	},
 	"autoload": {
 		"psr-4": {

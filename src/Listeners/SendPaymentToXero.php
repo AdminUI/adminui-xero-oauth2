@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use AdminUI\AdminUIXero\Facades\XeroPayment;
 use AdminUI\AdminUI\Events\Public\PaymentReceived;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
+use Throwable;
 
 class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAfterCommit
 {
@@ -49,5 +50,10 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
             'processed_at' => Carbon::parse($processedAt)
         ]);
         Log::debug("Payment sent to Xero");
+    }
+
+    public function failed($event, Throwable $exception): void
+    {
+        Log::error("Failed to send payment to Xero: " . $exception->getMessage());
     }
 }
