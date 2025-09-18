@@ -1,0 +1,1 @@
+-   **Feature**: Added 'View Failed Payment Syncs' dialog and related actions.
