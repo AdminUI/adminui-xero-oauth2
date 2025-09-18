@@ -210,11 +210,34 @@
 							/>
 						</template>
 					</v-list-item>
+					<v-list-item
+						:disabled="!props.xeroStatus.connected || props.failedPaymentSyncs.length === 0"
+						@click.stop="showFailedPaymentSyncsFlow = true"
+					>
+						<template #prepend>
+							<v-icon color="error">mdi-cash-sync</v-icon>
+						</template>
+
+						<v-list-item-title>
+							<span>View Failed Payment Syncs</span>
+						</v-list-item-title>
+						<template #append>
+							<v-badge
+								:content="props.failedPaymentSyncs.length"
+								location="right"
+								inline
+								class="mt-0"
+								color="error"
+								:model-value="props.failedPaymentSyncs.length > 0"
+							/>
+						</template>
+					</v-list-item>
 				</v-list>
 			</AuiCard>
 		</v-col>
 		<OrderSyncFlow v-model="showOrderSyncFlow" />
 		<FailedOrderSyncs v-model="showFailedSyncsFlow" :items="props.failedOrderSyncs" />
+		<FailedPaymentSyncs v-model="showFailedPaymentSyncsFlow" :items="props.failedPaymentSyncs" />
 	</v-row>
 </template>
 
@@ -224,6 +247,7 @@ import { useApiForm, useRoute, ref } from "adminui";
 import XeroLogo from "../components/XeroLogo.vue";
 import OrderSyncFlow from "../components/OrderSyncFlow.vue";
 import FailedOrderSyncs from "../components/FailedOrderSyncs.vue";
+import FailedPaymentSyncs from "../components/FailedPaymentSyncs.vue";
 
 defineOptions({
 	inheritAttrs: false,
@@ -255,6 +279,10 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+	failedPaymentSyncs: {
+		type: Array,
+		default: () => [],
+	},
 });
 
 const { copy, copied, isSupported } = useClipboard({ source: () => props.xeroCallback });
@@ -278,4 +306,5 @@ const showOrderSyncFlow = ref(false);
  * Failed Syncs
  * ******************************************* */
 const showFailedSyncsFlow = ref(false);
+const showFailedPaymentSyncsFlow = ref(false);
 </script>

@@ -12,6 +12,7 @@ use AdminUI\AdminUI\Events\Public\OrderCreated;
 use AdminUI\AdminUI\Resources\Admin\OrderTableResource;
 use AdminUI\AdminUI\Traits\ApiResponseTrait;
 use AdminUI\AdminUIXero\Facades\XeroContact;
+use AdminUI\AdminUIXero\Helpers\FailedJobs;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 
 
@@ -77,7 +78,8 @@ class XeroOrdersController extends Controller
             $count++;
         }
 
-        Cache::forget('failed_order_syncs');
+        $cacheKey = FailedJobs::getCacheKey(SendOrderToXero::class);
+        Cache::forget($cacheKey);
         Flash::success($count . ' jobs were successfully put back on the queue', 'Jobs Requeued');
 
         return back();
@@ -97,7 +99,8 @@ class XeroOrdersController extends Controller
             $count++;
         }
 
-        Cache::forget('failed_order_syncs');
+        $cacheKey = FailedJobs::getCacheKey(SendOrderToXero::class);
+        Cache::forget($cacheKey);
         Flash::success($count . ' jobs were successfully deleted from the queue', 'Jobs Deleted');
 
         return back();

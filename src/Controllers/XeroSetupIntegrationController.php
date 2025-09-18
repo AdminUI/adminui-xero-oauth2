@@ -12,6 +12,7 @@ use AdminUI\AdminUI\Enums\PaymentStatus;
 use AdminUI\AdminUIXero\Helpers\FailedJobs;
 use AdminUI\AdminUI\Facades\Navigation as FacadesNavigation;
 use AdminUI\AdminUI\Controllers\AdminUI\Inertia\InertiaCoreController;
+use AdminUI\AdminUIXero\Listeners\SendPaymentToXero;
 
 class XeroSetupIntegrationController extends InertiaCoreController
 {
@@ -52,6 +53,9 @@ class XeroSetupIntegrationController extends InertiaCoreController
             },
             'failedOrderSyncs' => function () {
                 return FailedJobs::getFailedJobs();
+            },
+            'failedPaymentSyncs' => function () {
+                return FailedJobs::getFailedJobs(class: SendPaymentToXero::class);
             },
             'failedOrders' => function () {
                 return Order::whereDoesntHave('integrations', function ($query) {

@@ -6,39 +6,58 @@
 				show-select
 				:items="failedJobs"
 				:headers="[
-					{ title: 'Order ID', value: 'order_id' },
-					{ title: 'Account', value: 'order.account.name' },
-					{ title: 'User', value: 'order.user.full_name' },
-					{ title: 'Order Details', value: 'order' },
-					{ title: 'Failure Reason', value: 'exception' },
+					{ title: 'Payment ID', value: 'payment_id' },
+					{ title: 'Payment Details', value: 'payment' },
+					{ title: 'Failure Reason', value: 'exception', width: '40%' },
 					{ title: 'Failed at', value: 'failed_at' },
 				]"
 			>
-				<template #item.order_id="{ value }">
+				<template #item.payment_id="{ item }">
 					<v-chip
 						color="info"
 						class="text-white"
 						label
 						@click="
-							copy(value);
-							snackbar.add({ text: 'Order ID copied to clipboard', type: 'success' });
+							copy(item.payment.id);
+							snackbar.add({ text: 'Payment ID copied to clipboard', type: 'success' });
 						"
 					>
-						{{ value }}
+						{{ item.payment.id }}
 					</v-chip>
 				</template>
-				<template #item.order="{ item }">
-					<div class="d-flex flex-column">
-						<div class="text-caption">{{ item.order.lines.length }} items</div>
-
-						<div class="whitespace-nowrap">
-							<span class="font-weight-bold">Subtotal:</span>
-							{{ currency(item.order.order_total.exc_tax) }}
-						</div>
-						<div class="whitespace-nowrap">
-							<span class="font-weight-bold">Total:</span> {{ currency(item.order.order_total.inc_tax) }}
-						</div>
-					</div>
+				<template #item.payment="{ value }">
+					<VTable hover density="compact">
+						<tbody>
+							<tr v-if="value.user">
+								<td>User</td>
+								<td>{{ value.user.full_name }}</td>
+							</tr>
+							<tr v-if="value.transaction_id">
+								<td>Transaction ID</td>
+								<td>{{ value.transaction_id }}</td>
+							</tr>
+							<tr v-if="value.payment_type">
+								<td>Payment Type</td>
+								<td>{{ value.payment_type }}</td>
+							</tr>
+							<tr v-if="value.status_details?.text">
+								<td>Payment Status</td>
+								<td>{{ value.status_details.text }}</td>
+							</tr>
+							<tr v-if="value.order">
+								<td>Order ID</td>
+								<td>{{ value.order.id }}</td>
+							</tr>
+							<tr v-if="value.order">
+								<td>Order Invoice ID</td>
+								<td>{{ value.order.invoice_id }}</td>
+							</tr>
+							<tr v-if="value.total">
+								<td>Payment Amount</td>
+								<td>{{ currency(value.total) }}</td>
+							</tr>
+						</tbody>
+					</VTable>
 				</template>
 				<template #item.exception="{ value }">
 					<div>{{ value }}</div>
@@ -105,7 +124,7 @@ const isRetrying = ref(false);
 const retrySelectedJobs = () => {
 	isRetrying.value = true;
 	router.post(
-		route("admin.setup.integrations.xero.orders.retry"),
+		route("admin.setup.integrations.xero.payments.retry"),
 		{
 			selected: selected.value,
 		},
@@ -124,7 +143,7 @@ const isDeleting = ref(false);
 const deleteSelectedJobs = () => {
 	isDeleting.value = true;
 	router.post(
-		route("admin.setup.integrations.xero.orders.delete"),
+		route("admin.setup.integrations.xero.payments.delete"),
 		{
 			selected: selected.value,
 		},

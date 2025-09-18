@@ -3,43 +3,51 @@
 namespace AdminUI\AdminUIXero\Helpers;
 
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
+use AdminUI\AdminUIXero\Listeners\SendPaymentToXero;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 
 class FailedJobs
 {
-    public static function getFailedJobs()
+    public static function getCacheKey(string $class): string
     {
-        return Cache::remember('failed_order_syncs', 60 * 5, function () {
-            $failed = collect(app()['queue.failer']->all())->filter([__CLASS__, 'filterByName']);
+        return 'xero_failed_syncs__' . basename($class);
+    }
 
-            return $failed->map(function ($failed) {
-                return self::parseFailedJob((array) $failed);
+    public static function getFailedJobs($class = SendOrderToXero::class)
+    {
+        $cacheKey = self::getCacheKey($class);
+        return Cache::remember($cacheKey, 1/* 60 * 5 */, function () use ($class) {
+            $failed = collect(app()['queue.failer']->all())->filter(fn($item) => self::filterByName($item, $class));
+
+            return $failed->map(function ($failed) use ($class) {
+                return self::parseFailedJob((array) $failed, $class);
             })->values()->all();
         });
     }
 
-    public static function filterByName($item)
+    public static function filterByName($item, $class)
     {
         $payload = json_decode($item->payload, true);
-        return $payload['displayName'] == \AdminUI\AdminUIXero\Listeners\SendOrderToXero::class;
+        return $payload['displayName'] == $class;
     }
 
-    public static function parseFailedJob(array $failed)
+    public static function parseFailedJob(array $failed, string $class)
     {
         $payload = json_decode($failed['payload'], true);
         $dataError = null;
-        $order = null;
+        $jobData = [];
 
         try {
             $command = unserialize($payload['data']['command']);
-            if ($command instanceof SendOrderToXero) {
-                $order = $command->event->order;
-            } else {
-                $data = array_shift($command->data);
-                $order = $data->order;
+            $data = array_shift($command->data);
+            if ($command->class === SendOrderToXero::class) {
+                $data->order->load('account', 'user', 'lines');
+                $jobData['order'] = $data->order;
+            } else if ($command->class === SendPaymentToXero::class) {
+                $data->payment->load('user');
+                $jobData['payment'] = $data->payment;
             }
-            $order->load('account', 'user', 'lines');
         } catch (\Exception $e) {
             $dataError = "Unable to retrieve job data";
         }
@@ -50,8 +58,8 @@ class FailedJobs
             'queue' => $failed['queue'],
             'failed_at' => $failed['failed_at'],
             'job' => $payload['displayName'],
-            'order' => $order,
-            'order_error' => $dataError,
+            ...$jobData,
+            'job_error' => $dataError,
             'exception' => self::parseException($failed['exception'])
         ];
     }

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use AdminUI\AdminUIXero\Controllers\XeroOrdersController;
 use AdminUI\AdminUIXero\Controllers\XeroWebhookController;
+use AdminUI\AdminUIXero\Controllers\XeroPaymentsController;
 use AdminUI\AdminUIXero\Controllers\XeroSetupIntegrationController;
 
 Route::prefix(config('adminui.prefix'))->as('admin.setup.integrations.')->middleware(['adminui', 'auth:admin'])->group(function () {
@@ -11,6 +12,9 @@ Route::prefix(config('adminui.prefix'))->as('admin.setup.integrations.')->middle
     Route::post('setup/integrations/xero/orders/sync', [XeroOrdersController::class, 'sync'])->name('xero.orders.sync');
     Route::post('setup/integrations/xero/orders/retry', [XeroOrdersController::class, 'retry'])->name('xero.orders.retry');
     Route::post('setup/integrations/xero/orders/delete', [XeroOrdersController::class, 'delete'])->name('xero.orders.delete');
+
+    Route::post('setup/integrations/xero/payments/retry', [XeroPaymentsController::class, 'retry'])->name('xero.payments.retry');
+    Route::post('setup/integrations/xero/payments/delete', [XeroPaymentsController::class, 'delete'])->name('xero.payments.delete');
 
     Route::get('setup/integrations/xero/creditlimit/{account}', [XeroOrdersController::class, 'getCreditLimit']);
 });
