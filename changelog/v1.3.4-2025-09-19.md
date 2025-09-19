@@ -1,0 +1,1 @@
+-   **BugFix**: Resolve AccountAPI and Credential manager with each request, rather than initialising in constructor.
