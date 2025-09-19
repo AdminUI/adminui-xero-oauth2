@@ -2,6 +2,7 @@
 
 namespace AdminUI\AdminUIXero\Listeners;
 
+use AdminUI\AdminUIXero\JobMiddleware\RefreshXeroToken;
 use Throwable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +21,21 @@ abstract class BaseXeroListener implements ShouldQueue
      * @var int
      */
     public $tries = 5;
+
+    /**
+
+     * Get the middleware the job should pass through.
+
+     *
+
+     * @return array<int, object>
+
+     */
+
+    public function middleware(): array
+    {
+        return [new RefreshXeroToken];
+    }
 
     /**
      * Handle a job failure.

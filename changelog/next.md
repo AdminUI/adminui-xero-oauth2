@@ -1,0 +1,1 @@
+-   **BugFix**: Add job-middleware to queued listeners to always use fresh auth token
