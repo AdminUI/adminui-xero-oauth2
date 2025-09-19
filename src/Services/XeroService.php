@@ -8,32 +8,12 @@ use Illuminate\Support\Facades\Log;
 use XeroAPI\XeroPHP\Api\AccountingApi;
 use Webfox\Xero\OauthCredentialManager;
 use AdminUI\AdminUI\Models\Configuration;
-use Illuminate\Support\Facades\Storage;
 
 class XeroService
 {
-    protected AccountingApi $apiInstance;
-    protected OauthCredentialManager $xeroCredentials;
-
-    public function __construct()
-    {
-        try {
-            $this->resolveDependencies();
-        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $error) {
-            Storage::delete('xero.json');
-            $this->resolveDependencies();
-        }
-    }
-
-    private function resolveDependencies()
-    {
-        $this->apiInstance = resolve(AccountingApi::class);
-        $this->xeroCredentials = resolve(OauthCredentialManager::class);
-    }
-
     public function api()
     {
-        return $this->apiInstance;
+        return resolve(AccountingApi::class);
     }
 
     public function where(array $constraints, string $condition = "AND")
@@ -45,7 +25,7 @@ class XeroService
 
     public function credentials(): OauthCredentialManager
     {
-        return $this->xeroCredentials;
+        return resolve(OauthCredentialManager::class);
     }
 
     public function getTenantId(): ?string
