@@ -5,6 +5,7 @@ namespace AdminUI\AdminUIXero\Services;
 use Illuminate\Support\Carbon;
 use AdminUI\AdminUI\Helpers\Money;
 use AdminUI\AdminUI\Models\Payment;
+use Illuminate\Support\Facades\Log;
 use AdminUI\AdminUIXero\Facades\Xero;
 
 class XeroPaymentService
@@ -12,7 +13,7 @@ class XeroPaymentService
     /**
      * @throws \Exception;
      */
-    public function syncPayment(Payment $paymentModel, string $processId = null): \XeroAPI\XeroPHP\Models\Accounting\Payment
+    public function syncPayment(Payment $paymentModel, ?string $processId = null): \XeroAPI\XeroPHP\Models\Accounting\Payment
     {
         if (!$processId) {
             throw new \Exception("AdminUI Xero: Can't sync this payment since the order hasn't been processed by Xero yet");

@@ -3,14 +3,16 @@
 namespace AdminUI\AdminUIXero;
 
 use Illuminate\Foundation\Vite;
+use AdminUI\AdminUI\Models\Option;
 use AdminUI\AdminUI\Facades\Seeder;
 use AdminUI\AdminUI\Models\Account;
+use Webfox\Xero\Xero as WebfoxXero;
 use AdminUI\AdminUI\Facades\Filters;
 use Illuminate\Support\Facades\View;
 use AdminUI\AdminUI\Constants\Filter;
+use AdminUI\AdminUIXero\Facades\Xero;
 use Illuminate\Support\ServiceProvider;
 use AdminUI\AdminUI\Facades\Application;
-use AdminUI\AdminUI\Models\Option;
 use AdminUI\AdminUIXero\Facades\XeroContact;
 use AdminUI\AdminUIXero\Services\XeroService;
 use function Illuminate\Filesystem\join_paths;
@@ -23,7 +25,6 @@ use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
 use AdminUI\AdminUIXero\Providers\ConfigServiceProvider;
 use AdminUI\AdminUIXero\Database\Seeders\NavigationSeeder;
 use AdminUI\AdminUIXero\Database\Seeders\ConfigurationSeeder;
-use Webfox\Xero\Xero as WebfoxXero;
 
 class Provider extends ServiceProvider
 {
@@ -94,7 +95,7 @@ class Provider extends ServiceProvider
         if (auiSetting('xero_use_account_balance', false)) {
             Filters::add(Filter::ACCOUNT_SHOW_LEDGER, fn() => false);
             Filters::add(Filter::ACCOUNT_CREDIT_INFORMATION, function ($null, Account $account) {
-                return XeroContact::getCreditLimit($account);
+                return Xero::isConnected() ? XeroContact::getCreditLimit($account) : $null;
             });
             Filters::add(Filter::ACCOUNT_USE_LEDGER, function () {
                 return true;
