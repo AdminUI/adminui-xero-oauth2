@@ -31,6 +31,9 @@ class XeroPaymentService
         $payment->setInvoice($invoice);
         $payment->setAccount($account);
         $payment->setAmount(Money::convertToBase($paymentModel->total));
+        if (!empty($paymentModel->transaction_id)) {
+            $payment->setReference($paymentModel->transaction_id);
+        }
         $payment->setDate((new Carbon($paymentModel->created_at))->format("Y-m-d"));
 
         $idempotency = "PAYMENT_" . $paymentModel->transaction_id . "_" . $paymentModel->id;
