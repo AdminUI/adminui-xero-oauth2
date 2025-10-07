@@ -25,6 +25,7 @@ use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
 use AdminUI\AdminUIXero\Providers\ConfigServiceProvider;
 use AdminUI\AdminUIXero\Database\Seeders\NavigationSeeder;
 use AdminUI\AdminUIXero\Database\Seeders\ConfigurationSeeder;
+use AdminUI\AdminUIXero\Handlers\OrderIntegrationHandler;
 
 class Provider extends ServiceProvider
 {
@@ -40,6 +41,8 @@ class Provider extends ServiceProvider
         $this->app->register(\Webfox\Xero\XeroServiceProvider::class);
         $this->registerFacades();
         $this->loadRoutesFrom(__DIR__ . '/Routes/admin.php');
+
+        $this->app->bind('adminui.order-integration.xero', fn() => new OrderIntegrationHandler);
     }
 
     public function boot(): void

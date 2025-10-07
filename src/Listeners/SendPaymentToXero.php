@@ -5,7 +5,6 @@ namespace AdminUI\AdminUIXero\Listeners;
 use Illuminate\Support\Carbon;
 use AdminUI\AdminUI\Models\Order;
 use Illuminate\Support\Facades\Log;
-use AdminUI\AdminUIXero\Facades\Xero;
 use Illuminate\Queue\InteractsWithQueue;
 use AdminUI\AdminUIXero\Facades\XeroPayment;
 use AdminUI\AdminUI\Events\Public\PaymentReceived;
@@ -52,7 +51,7 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
         Log::debug("Payment sent to Xero");
     }
 
-    public function failed($event, Throwable $exception): void
+    public function failed(mixed $event, Throwable $exception): void
     {
         Log::error("Failed to send payment to Xero: " . $exception->getMessage());
     }
