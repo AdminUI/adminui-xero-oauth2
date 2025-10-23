@@ -11,3 +11,8 @@ window.auiAddons.insert(
 	defineAsyncComponent(() => import("./components/PaymentSidebarActions.vue")),
 	10
 );
+window.auiAddons.insert(
+	{ page: "order-show", section: "sidebar", modifier: "actions" },
+	defineAsyncComponent(() => import("./components/OrderSidebarActions.vue")),
+	10
+);
