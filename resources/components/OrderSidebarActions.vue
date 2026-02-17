@@ -1,12 +1,12 @@
 <template>
-	<VListItem v-if="showSendOrder" prepend-icon="mdi-cloud-arrow-up" @click="onSendOrder"
+	<VListItem v-if="showSendOrder" prepend-icon="mdi-cloud-arrow-up" :loading="isSending" @click="onSendOrder"
 		>Send Order to Xero</VListItem
 	>
 	<VListItem v-else> Order already synced to Xero </VListItem>
 </template>
 
 <script setup>
-import { computed, router, useRoute } from "adminui";
+import { computed, ref, useRoute, axios } from "adminui";
 
 const props = defineProps({
 	integrations: {
@@ -24,9 +24,18 @@ const showSendOrder = computed(
 	() => !props.integrations.find((item) => item.type === "xero" && item.model_type === "order")
 );
 
+const isSending = ref(false);
 const onSendOrder = () => {
-	router.post(route("admin.setup.integrations.xero.orders.sync"), {
-		orders: [props.order.id],
-	});
+	isSending.value = true;
+	axios
+		.post(route("admin.setup.integrations.xero.orders.sync-synchronous"), {
+			orders: [props.order.id],
+		})
+		.then((res) => {
+			console.log(res);
+		})
+		.finally(() => {
+			isSending.value = false;
+		});
 };
 </script>

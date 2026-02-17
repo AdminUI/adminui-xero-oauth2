@@ -43,6 +43,7 @@ class XeroPaymentService
         }
 
         $payments = Xero::createPayment($payment, $idempotency);
+        logger('Payment ID: ' . $paymentModel->id . '|' . $payments);
 
         return $payments[0];
     }

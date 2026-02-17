@@ -22,6 +22,15 @@ abstract class BaseXeroListener implements ShouldQueue
      */
     public $tries = 5;
 
+    protected $debug = false;
+
+    public function debug(): static
+    {
+        $this->debug = true;
+
+        return $this;
+    }
+
     /**
 
      * Get the middleware the job should pass through.

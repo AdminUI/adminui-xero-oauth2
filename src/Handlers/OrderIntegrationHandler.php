@@ -15,16 +15,17 @@ class OrderIntegrationHandler implements OrderIntegrationContract
             return Xero::getOrganisation() ?? null;
         });
 
-        if ($integration->model_type === "payment") {
+        if ($integration->model_type === 'payment') {
             $shortcode = $organisation['short_code'];
-            return "https://go.xero.com/organisationlogin/default.aspx?shortcode=$shortcode&redirecturl=/Bank/ViewTransaction.aspx?bankTransactionID=" . $integration->process_id;
+
+            return "https://go.xero.com/organisationlogin/default.aspx?shortcode=$shortcode&redirecturl=/Bank/ViewTransaction.aspx?bankTransactionID=".$integration->process_id;
         }
 
-        return "";
+        return '';
     }
 
     public function getColour(OrderIntegration $integration): string
     {
-        return "#2baaed";
+        return '#2baaed';
     }
 }

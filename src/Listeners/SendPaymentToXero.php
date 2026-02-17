@@ -2,14 +2,15 @@
 
 namespace AdminUI\AdminUIXero\Listeners;
 
+use Throwable;
 use Illuminate\Support\Carbon;
 use AdminUI\AdminUI\Models\Order;
 use Illuminate\Support\Facades\Log;
+use AdminUI\AdminUI\Enums\PaymentStatus;
 use Illuminate\Queue\InteractsWithQueue;
 use AdminUI\AdminUIXero\Facades\XeroPayment;
 use AdminUI\AdminUI\Events\Public\PaymentReceived;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
-use Throwable;
 
 class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAfterCommit
 {
@@ -29,6 +30,10 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
             return;
         }
 
+        if ($event->payment->status != PaymentStatus::PAID) {
+            logger($event->payment->id . ' is not marked as paid');
+            return;
+        }
 
         // If the payment's order has not been turned into an invoice yet, delay this job
         $order = Order::find($event->payment->order->id);
@@ -38,6 +43,7 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
             return;
         }
 
+        logger('Sending payment to xero: ' . $event->payment->id . ' for order: ' . $order->invoice_id);
         $payment = XeroPayment::syncPayment($event->payment, $xeroOrder->process_id);
 
         /** @var \DateTime $processedAt */
