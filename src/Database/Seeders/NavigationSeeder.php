@@ -9,6 +9,23 @@ class NavigationSeeder extends Seeder
 {
     public function run()
     {
+        $accounts = Navigation::firstWhere('ref', 'accounts');
+
+        Navigation::updateOrCreate(
+            ['ref' => 'accounts.ledgers'],
+            [
+                'title' => 'Account Ledgers',
+                'route' => 'admin.ledgers.index',
+                'icon' => null,
+                'parent_id' => $accounts->id,
+                'permissions' => 'admin read',
+                'package' => 'AdminUI',
+                'is_active' => true,
+                'sort_order' => 21,
+            ]
+        );
+
+
         $setup = Navigation::firstWhere('ref', 'setup');
 
         Navigation::where('ref', 'setup.xero')->delete();

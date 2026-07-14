@@ -2,30 +2,32 @@
 
 namespace AdminUI\AdminUIXero;
 
-use Illuminate\Foundation\Vite;
-use AdminUI\AdminUI\Models\Option;
+use AdminUI\AdminUI\Constants\Filter;
+use AdminUI\AdminUI\Facades\Application;
+use AdminUI\AdminUI\Facades\Filters;
 use AdminUI\AdminUI\Facades\Seeder;
 use AdminUI\AdminUI\Models\Account;
-use Webfox\Xero\Xero as WebfoxXero;
-use AdminUI\AdminUI\Facades\Filters;
-use Illuminate\Support\Facades\View;
-use AdminUI\AdminUI\Constants\Filter;
+use AdminUI\AdminUI\Models\Option;
+use AdminUI\AdminUIXero\Commands\DisconnectFromXero;
+use AdminUI\AdminUIXero\Commands\PushAllOrdersToXero;
+use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
+use AdminUI\AdminUIXero\Database\Seeders\ConfigurationSeeder;
+use AdminUI\AdminUIXero\Database\Seeders\NavigationSeeder;
 use AdminUI\AdminUIXero\Facades\Xero;
-use Illuminate\Support\ServiceProvider;
-use AdminUI\AdminUI\Facades\Application;
 use AdminUI\AdminUIXero\Facades\XeroContact;
-use AdminUI\AdminUIXero\Services\XeroService;
-use function Illuminate\Filesystem\join_paths;
+use AdminUI\AdminUIXero\Handlers\OrderIntegrationHandler;
+use AdminUI\AdminUIXero\Providers\ConfigServiceProvider;
+use AdminUI\AdminUIXero\Providers\EventServiceProvider;
 use AdminUI\AdminUIXero\Services\XeroContactService;
 use AdminUI\AdminUIXero\Services\XeroInvoiceService;
 use AdminUI\AdminUIXero\Services\XeroPaymentService;
-use AdminUI\AdminUIXero\Commands\PushAllOrdersToXero;
-use AdminUI\AdminUIXero\Providers\EventServiceProvider;
-use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
-use AdminUI\AdminUIXero\Providers\ConfigServiceProvider;
-use AdminUI\AdminUIXero\Database\Seeders\NavigationSeeder;
-use AdminUI\AdminUIXero\Database\Seeders\ConfigurationSeeder;
-use AdminUI\AdminUIXero\Handlers\OrderIntegrationHandler;
+use AdminUI\AdminUIXero\Services\XeroService;
+use Illuminate\Foundation\Vite;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
+use Webfox\Xero\Xero as WebfoxXero;
+
+use function Illuminate\Filesystem\join_paths;
 
 class Provider extends ServiceProvider
 {
@@ -67,7 +69,7 @@ class Provider extends ServiceProvider
         if (!$this->app->runningInConsole()) {
             $this->pushJavascript();
         } else {
-            $this->commands([PushOrderToXeroCommand::class, PushAllOrdersToXero::class]);
+            $this->commands([PushOrderToXeroCommand::class, PushAllOrdersToXero::class, DisconnectFromXero::class]);
         }
 
         $this->publishes([

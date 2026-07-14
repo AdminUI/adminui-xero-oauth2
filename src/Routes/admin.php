@@ -1,5 +1,6 @@
 <?php
 
+use AdminUI\AdminUIXero\Controllers\AccountLedgersController;
 use Illuminate\Support\Facades\Route;
 use AdminUI\AdminUIXero\Controllers\XeroOrdersController;
 use AdminUI\AdminUIXero\Controllers\XeroWebhookController;
@@ -21,6 +22,10 @@ Route::prefix(config('adminui.prefix'))->as('admin.setup.integrations.')->middle
     Route::post('setup/integrations/xero/payments/delete', [XeroPaymentsController::class, 'delete'])->name('xero.payments.delete');
 
     Route::get('setup/integrations/xero/creditlimit/{account}', [XeroOrdersController::class, 'getCreditLimit']);
+});
+
+Route::prefix(config('adminui.prefix'))->as('admin.')->middleware(['adminui', 'auth:admin'])->group(function () {
+    Route::get('account/ledgers', [AccountLedgersController::class, 'index'])->name('ledgers.index');
 });
 
 Route::prefix(config('adminui.prefix'))->group(function () {
