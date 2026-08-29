@@ -27,7 +27,7 @@ class XeroContactService
 
         // if ($contact) {
         //     if (count($contact) == 1) {
-        //         // Contachas been found.
+        //         // Contacts been found.
         //         // Update the contact
 
         //         return $contact[0];
@@ -106,8 +106,6 @@ class XeroContactService
 
     /**
      * Search Xero account for a contact by their name
-     *
-     * @param string $name The name of the person to search for
      */
     public function getContactByAccount(string $accountId): \XeroAPI\XeroPHP\Models\Accounting\Contacts|null
     {
@@ -117,7 +115,7 @@ class XeroContactService
     /**
      * Create a new contact on Xero
      */
-    public function createContact(Account $account, User $user): \XeroAPI\XeroPHP\Models\Accounting\Contact
+    public function createContact(Account $account, User $user): \XeroAPI\XeroPHP\Models\Accounting\Contact|null
     {
         $billingAddress = $account->addresses->sortByDesc('is_billing')->first();
         $addresses = [];
@@ -182,6 +180,7 @@ class XeroContactService
             return $result->getContacts()[0];
         } catch (\Exception $e) {
             logger('Xero contact creation failed: ' . $e->getMessage());
+            return null;
         }
     }
 
