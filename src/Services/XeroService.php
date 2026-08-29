@@ -40,7 +40,11 @@ class XeroService
 
     public function isConnected(): bool
     {
-        return $this->credentials()->exists();
+        try {
+            return $this->credentials()->exists();
+        } catch (\Exception) {
+            return false;
+        }
     }
 
     public function getUser(): array
