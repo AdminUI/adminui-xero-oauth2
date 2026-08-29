@@ -209,8 +209,18 @@ class XeroContactService
      */
     public function getCreditLimit(Account $account): ?array
     {
-        //$contact = $this->getContactByAccount('AUI' . $account->id);
-        $contact = $this->getContactByName('Bayside Club');
+        try {
+            $contact = $this->getContactByAccount('AUI' . $account->id);
+        } catch (\Exception) {
+            return [
+                'credited' => 0,
+                'debited' => 0,
+                'balance' => 0,
+                'overdue' => 0,
+                'available' => 0
+            ];
+        }
+
 
         $outstanding = 0;
         $overdue = 0;
