@@ -2,14 +2,16 @@
 
 namespace AdminUI\AdminUIXero\Services;
 
-use Illuminate\Support\Str;
-use AdminUI\AdminUI\Models\User;
 use AdminUI\AdminUI\Helpers\Money;
 use AdminUI\AdminUI\Models\Account;
+use AdminUI\AdminUI\Models\User;
 use AdminUI\AdminUIXero\Facades\Xero;
-use XeroAPI\XeroPHP\Models\Accounting\Phone;
+use Carbon\CarbonInterval;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use XeroAPI\XeroPHP\Models\Accounting\Address;
 use XeroAPI\XeroPHP\Models\Accounting\PaymentTerm;
+use XeroAPI\XeroPHP\Models\Accounting\Phone;
 
 class XeroContactService
 {
@@ -208,35 +210,26 @@ class XeroContactService
      */
     public function getCreditLimit(Account $account): ?array
     {
-        try {
+        return Cache::remember('xero_credit_limit_' . $account->id, CarbonInterval::hours(6), function () use ($account) {
             $contact = $this->getContactByAccount('AUI' . $account->id);
-        } catch (\Exception) {
+
+            $outstanding = 0;
+            $overdue = 0;
+            if (empty($contact)) {
+                return null;
+            }
+            if (isset($contact[0]['balances']['accounts_receivable'])) {
+                $outstanding = Money::convertToSubunit($contact[0]['balances']['accounts_receivable']['outstanding'] ?? 0);
+                $overdue = Money::convertToSubunit($contact[0]['balances']['accounts_receivable']['overdue']);
+            }
+            $available = $account->credit_limit - $outstanding;
             return [
                 'credited' => 0,
                 'debited' => 0,
-                'balance' => 0,
-                'overdue' => 0,
-                'available' => 0
+                'balance' => $outstanding,
+                'overdue' => $overdue,
+                'available' => $available
             ];
-        }
-
-
-        $outstanding = 0;
-        $overdue = 0;
-        if (empty($contact)) {
-            return null;
-        }
-        if (isset($contact[0]['balances']['accounts_receivable'])) {
-            $outstanding = Money::convertToSubunit($contact[0]['balances']['accounts_receivable']['outstanding'] ?? 0);
-            $overdue = Money::convertToSubunit($contact[0]['balances']['accounts_receivable']['overdue']);
-        }
-        $available = $account->credit_limit - $outstanding;
-        return [
-            'credited' => 0,
-            'debited' => 0,
-            'balance' => $outstanding,
-            'overdue' => $overdue,
-            'available' => $available
-        ];
+        });
     }
 }

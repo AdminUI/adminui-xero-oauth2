@@ -1,21 +1,21 @@
 <template>
-	<v-row>
-		<v-col cols="9">
+	<VRow>
+		<VCol cols="9">
 			<VCard class="pb-4 relative">
 				<div class="px-4 max-w-prose">
-					<v-slide-y-transition>
+					<VSlideYTransition>
 						<div v-if="!form.xero_linked_account && props.xeroStatus.connected">
-							<v-alert type="warning" border="start">
+							<VAlert type="warning" border="start">
 								Please select an account to link for your integration
-							</v-alert>
+							</VAlert>
 						</div>
-					</v-slide-y-transition>
+					</VSlideYTransition>
 				</div>
 				<AuiSetting
 					title="Sync Orders"
 					help="When enabled, orders placed through AdminUI will be automatically pushed to the linked Xero account"
 				>
-					<v-switch
+					<VSwitch
 						v-model="form.xero_sync_orders"
 						label="Sync Orders"
 						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
@@ -26,7 +26,7 @@
 					title="Sync Contact Updates"
 					help="While contacts will initially be pushed when syncing orders, you can also choose to push changes to your accounts to Xero to update linked contacts"
 				>
-					<v-switch
+					<VSwitch
 						v-model="form.xero_sync_contacts"
 						label="Sync Contacts"
 						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
@@ -37,7 +37,7 @@
 					title="Sync Payments"
 					help="When enabled, orders placed through AdminUI will be automatically pushed to the linked Xero account"
 				>
-					<v-switch
+					<VSwitch
 						v-model="form.xero_sync_payments"
 						label="Sync Payments"
 						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
@@ -48,7 +48,7 @@
 					title="Use Xero Account Balance"
 					help="Instead of using the AdminUI ledger, get account balance from linked Xero customer account"
 				>
-					<v-switch
+					<VSwitch
 						v-model="form.xero_use_account_balance"
 						label="Use Xero Account Balance"
 						:disabled="!props.xeroStatus.connected || !form.xero_linked_account"
@@ -120,14 +120,14 @@
 					title="Your Xero App URLs"
 					help="Xero requires you to register a few URLs with them for full integration. The first is the URL to use when a connection attempt is complete. The second is the URL to send Webhook deliveries."
 				>
-					<v-table show-hover>
+					<VTable show-hover>
 						<tbody>
 							<tr>
 								<td>Redirect URL:</td>
 								<td>
 									<div class="d-flex align-center">
 										<strong>{{ props.xeroCallback }}</strong>
-										<v-btn
+										<VBtn
 											v-if="isSupported"
 											variant="text"
 											icon="mdi-content-copy"
@@ -143,7 +143,7 @@
 								<td>
 									<div class="d-flex align-center">
 										<strong>{{ props.xeroWebhookDeliveryURL }}</strong>
-										<v-btn
+										<VBtn
 											v-if="isSupported"
 											variant="text"
 											icon="mdi-content-copy"
@@ -155,65 +155,65 @@
 								</td>
 							</tr>
 						</tbody>
-					</v-table>
+					</VTable>
 				</AuiSetting>
 				<div class="px-4">
-					<v-divider class="my-4" />
+					<VDivider class="my-4" />
 				</div>
 				<div class="xero-logo d-flex px-4 absolute top-4 right-0">
 					<XeroLogo style="height: 100px" />
 				</div>
 			</VCard>
-		</v-col>
-		<v-col cols="3">
+		</VCol>
+		<VCol cols="3">
 			<AuiCard title="Connection Status" class="mb-8">
 				<template v-if="props.xeroStatus.error">
-					<v-alert type="error">{{ props.xeroStatus.error }}</v-alert>
-					<v-btn color="primary" block :href="route('xero.auth.authorize')">Reconnect to Xero</v-btn>
+					<VAlert type="error">{{ props.xeroStatus.error }}</VAlert>
+					<VBtn color="primary" block :href="route('xero.auth.authorize')">Reconnect to Xero</VBtn>
 				</template>
 				<template v-else-if="props.xeroStatus.connected">
 					<p class="text-center text-h6">
-						<v-icon class="mr-4" color="success" icon="mdi-flash" />
+						<VIcon class="mr-4" color="success" icon="mdi-flash" />
 						Connected
 					</p>
 					<p class="text-center">
 						Connected as <strong>{{ props.xeroStatus.organisationName }}</strong> via
 						{{ props.xeroStatus.username }}
 					</p>
-					<v-btn variant="text" color="primary" block :href="route('xero.auth.authorize')"
-						>Reconnect to Xero</v-btn
+					<VBtn variant="text" color="primary" block :href="route('xero.auth.authorize')"
+						>Reconnect to Xero</VBtn
 					>
 				</template>
 				<template v-else>
 					<p class="text-center text-h6 mb-2">
-						<v-icon class="mr-4" icon="mdi-flash-off" />
+						<VIcon class="mr-4" icon="mdi-flash-off" />
 						Not Connected
 					</p>
-					<v-btn color="primary" block :href="route('xero.auth.authorize')">Connect to Xero</v-btn>
+					<VBtn color="primary" block :href="route('xero.auth.authorize')">Connect to Xero</VBtn>
 				</template>
 			</AuiCard>
 			<AuiCard title="Actions" class="my-8" content-class="px-0">
-				<v-list>
-					<v-list-item @click.stop="showOrderSyncFlow = true">
+				<VList>
+					<VListItem @click.stop="showOrderSyncFlow = true">
 						<template #prepend>
-							<v-icon>mdi-book-sync</v-icon>
+							<VIcon>mdi-book-sync</VIcon>
 						</template>
 
-						<v-list-item-title>Manually Sync Orders</v-list-item-title>
-					</v-list-item>
-					<v-list-item
+						<VListItemTitle>Manually Sync Orders</VListItemTitle>
+					</VListItem>
+					<VListItem
 						:disabled="!props.xeroStatus.connected || props.failedOrderSyncs.length === 0"
 						@click.stop="showFailedSyncsFlow = true"
 					>
 						<template #prepend>
-							<v-icon color="error">mdi-sync-alert</v-icon>
+							<VIcon color="error">mdi-sync-alert</VIcon>
 						</template>
 
-						<v-list-item-title>
+						<VListItemTitle>
 							<span>View Failed Order Syncs</span>
-						</v-list-item-title>
+						</VListItemTitle>
 						<template #append>
-							<v-badge
+							<VBadge
 								:content="props.failedOrderSyncs.length"
 								location="right"
 								inline
@@ -222,20 +222,20 @@
 								:model-value="props.failedOrderSyncs.length > 0"
 							/>
 						</template>
-					</v-list-item>
-					<v-list-item
+					</VListItem>
+					<VListItem
 						:disabled="!props.xeroStatus.connected || props.failedPaymentSyncs.length === 0"
 						@click.stop="showFailedPaymentSyncsFlow = true"
 					>
 						<template #prepend>
-							<v-icon color="error">mdi-cash-sync</v-icon>
+							<VIcon color="error">mdi-cash-sync</VIcon>
 						</template>
 
-						<v-list-item-title>
+						<VListItemTitle>
 							<span>View Failed Payment Syncs</span>
-						</v-list-item-title>
+						</VListItemTitle>
 						<template #append>
-							<v-badge
+							<VBadge
 								:content="props.failedPaymentSyncs.length"
 								location="right"
 								inline
@@ -244,14 +244,14 @@
 								:model-value="props.failedPaymentSyncs.length > 0"
 							/>
 						</template>
-					</v-list-item>
-				</v-list>
+					</VListItem>
+				</VList>
 			</AuiCard>
-		</v-col>
+		</VCol>
 		<OrderSyncFlow v-model="showOrderSyncFlow" />
 		<FailedOrderSyncs v-model="showFailedSyncsFlow" :items="props.failedOrderSyncs" />
 		<FailedPaymentSyncs v-model="showFailedPaymentSyncsFlow" :items="props.failedPaymentSyncs" />
-	</v-row>
+	</VRow>
 </template>
 
 <script setup>

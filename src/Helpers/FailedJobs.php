@@ -5,7 +5,9 @@ namespace AdminUI\AdminUIXero\Helpers;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 use AdminUI\AdminUIXero\Listeners\SendPaymentToXero;
 use Carbon\CarbonInterval;
+use Illuminate\Queue\Failed\DatabaseUuidFailedJobProvider;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class FailedJobs
 {
@@ -20,8 +22,13 @@ class FailedJobs
     public static function getFailedJobs($class = SendOrderToXero::class)
     {
         $cacheKey = self::getCacheKey($class);
+
         return Cache::remember($cacheKey, CarbonInterval::minutes(5), function () use ($class) {
-            $failed = collect(app()['queue.failer']->all())->filter(fn($item) => self::filterByName($item, $class));
+            $failed = DB::table('failed_jobs')
+                ->select(['id', 'uuid', 'connection', 'queue', 'payload', 'exception', 'failed_at'])
+                ->where('payload->displayName', $class)
+                ->get();
+
 
             return $failed->map(function ($failed) use ($class) {
                 return self::parseFailedJob((array) $failed, $class);
