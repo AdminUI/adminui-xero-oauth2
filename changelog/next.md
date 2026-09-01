@@ -1,1 +1,0 @@
-- **Improvement**: Use DB facade to get/filter failed jobs rather than filtering Eloquent models
