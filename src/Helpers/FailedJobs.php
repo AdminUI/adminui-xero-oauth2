@@ -66,7 +66,7 @@ class FailedJobs
         }
 
         return [
-            'id' => $failed['id'],
+            'id' => $failed['uuid'],
             'connection' => $failed['connection'],
             'queue' => $failed['queue'],
             'failed_at' => $failed['failed_at'],

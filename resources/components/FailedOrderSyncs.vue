@@ -97,7 +97,7 @@ const failedJobs = computed(
 				failed_at: mediumDate(item.failed_at),
 				order_id: item?.order?.id ?? null,
 			};
-		}) ?? []
+		}) ?? [],
 );
 
 const selected = ref([]);
@@ -116,7 +116,7 @@ const retrySelectedJobs = () => {
 			onFinish() {
 				isRetrying.value = false;
 			},
-		}
+		},
 	);
 };
 
@@ -136,7 +136,7 @@ const deleteSelectedJobs = () => {
 			onFinish() {
 				isDeleting.value = true;
 			},
-		}
+		},
 	);
 };
 </script>

@@ -61,7 +61,7 @@ class XeroOrdersController extends Controller
             $count++;
         }
 
-        Flash::success($count.' orders have been queued to sync with Xero', 'Sync Instruction Received');
+        Flash::success($count . ' orders have been queued to sync with Xero', 'Sync Instruction Received');
 
         return back();
     }
@@ -87,7 +87,7 @@ class XeroOrdersController extends Controller
             $count++;
         }
 
-        Flash::success($count.' orders have been synced with Xero', 'Order Synced');
+        Flash::success($count . ' orders have been synced with Xero', 'Order Synced');
 
         return $this->respondWithData([
             'log' => $log,
@@ -106,13 +106,13 @@ class XeroOrdersController extends Controller
             if (! $jobId) {
                 continue;
             }
-            Artisan::call('queue:retry '.$jobId);
+            Artisan::call('queue:retry ' . $jobId);
             $count++;
         }
 
         $cacheKey = FailedJobs::getCacheKey(SendOrderToXero::class);
         Cache::forget($cacheKey);
-        Flash::success($count.' jobs were successfully put back on the queue', 'Jobs Requeued');
+        Flash::success($count . ' jobs were successfully put back on the queue', 'Jobs Requeued');
 
         return back();
     }
@@ -121,7 +121,7 @@ class XeroOrdersController extends Controller
     {
         $validated = $request->validate([
             'selected' => ['required', 'array'],
-            'selected.*' => ['required', 'string'],
+            'selected.*' => ['required'],
         ]);
 
         $count = 0;
@@ -129,13 +129,13 @@ class XeroOrdersController extends Controller
             if (! $jobId) {
                 continue;
             }
-            Artisan::call('queue:forget '.$jobId);
+            Artisan::call('queue:forget ' . $jobId);
             $count++;
         }
 
         $cacheKey = FailedJobs::getCacheKey(SendOrderToXero::class);
         Cache::forget($cacheKey);
-        Flash::success($count.' jobs were successfully deleted from the queue', 'Jobs Deleted');
+        Flash::success($count . ' jobs were successfully deleted from the queue', 'Jobs Deleted');
 
         return back();
     }
