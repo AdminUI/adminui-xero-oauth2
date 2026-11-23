@@ -17,8 +17,10 @@ class AccountWithLedgerResource extends JsonResource
         $data = parent::toArray($request);
         return [
             ...$data,
-            'outstanding' => $this->outstanding,
-            'overdue' => $this->overdue
+            // Subunits (pence), or null if the account has never been synced with Xero
+            'outstanding' => $this->xero_outstanding,
+            'overdue' => $this->xero_overdue,
+            'balances_synced_at' => $this->xero_balances_synced_at,
         ];
     }
 }

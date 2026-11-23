@@ -1,0 +1,21 @@
+- **Feature**: Added a balance status chip (In Credit / Money Owed / Balance Settled) to the account ledgers table
+- **Feature**: Xero outstanding/overdue balances are now stored on the `accounts` table (`xero_outstanding`, `xero_overdue`, `xero_balances_synced_at`)
+- **Feature**: New `adminui:xero-sync-balances` command, scheduled hourly, to resync balances for all Xero-linked accounts
+- **Improvement**: Invoice and contact webhooks now queue a balance sync for the affected contacts
+- **Improvement**: Account ledgers table can now be sorted by Outstanding, Overdue and Status, and no longer calls Xero on every page load
+- **Fix**: Removed a hard-coded Xero contact ID from the account ledgers lookup
+- **Upgrade note**: Run migrations, then `php artisan adminui:xero-sync-balances` once to populate existing balances
+- **Dependency**: Allow `webfox/laravel-xero-oauth2` ^7.0 (brings `xeroapi/xero-php-oauth2` 16.x and `firebase/php-jwt` 7.x). No code changes were required; all used API methods and models are unchanged apart from new optional parameters
+- **Fix**: Manual order syncs (setup page "Sync" button, `adminui:xero-push-orders`, `adminui:xero-push-order`) silently did nothing because the event was dropped when dispatching the listener. Listeners are now queued with `BaseXeroListener::queue()`, and the commands report per-order success or failure
+- **Fix**: Cancelling an order that was never synced to Xero no longer fails the `CancelOrderToXero` job; already-voided invoices are skipped and Xero errors are reported
+- **Fix**: Orders for accounts with no users can now be synced (contact creation no longer requires a user); fixed the fallback contact email missing a dot
+- **Fix**: Removed the `setup/integrations/xero/creditlimit/{account}` debug route
+- **Fix**: API calls are logged to a `xero` log channel (`storage/logs/xero.log`, registered automatically unless the app defines one); previously the channel didn't exist and each call raised an emergency log error
+- **Fix**: Payments waiting for their order's invoice now retry for up to 6 hours instead of failing after ~50 seconds, and payments for orders without an account are skipped
+- **Fix**: Failed-job retry/delete passes job IDs as command arguments instead of building a command string from request input
+- **Fix**: Failed Xero API calls now raise `SyncFailedException` with Xero's own error message instead of failing later with unrelated type errors; `Xero::getLastError()` exposes the last API error
+- **Fix**: Manual payment sync/re-sync no longer leaves an empty integration record behind when Xero rejects the payment
+- **Fix**: The synchronous order sync now returns a per-order log instead of an empty one
+- **Improvement**: Account ledger credit information now uses the stored Xero balances (synced on demand for accounts not yet synced) rather than a separate 6-hour cache keyed by account number
+- **Improvement**: Sales account code and standard-rate tax type are now settings (`xero_sales_account_code`, `xero_standard_tax_type`, defaulting to the previous `200` / `OUTPUT2`)
+- **Improvement**: Escape values in Xero `where` filters; invoice lines for deleted products no longer fail; Xero payment links no longer fail when the organisation can't be loaded; removed a stray space from the payment delete idempotency key

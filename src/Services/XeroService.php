@@ -13,6 +13,11 @@ use XeroAPI\XeroPHP\ApiException;
 
 class XeroService
 {
+    /**
+     * The message from the most recent failed API call, if any
+     */
+    protected ?string $lastError = null;
+
     public function api()
     {
         return resolve(AccountingApi::class);
@@ -21,8 +26,25 @@ class XeroService
     public function where(array $constraints, string $condition = "AND")
     {
         return collect($constraints)->map(function ($value, $key) {
-            return $key . '=="' . $value . '"';
+            return $key . '=="' . $this->escape($value) . '"';
         })->implode(' ' . $condition . ' ');
+    }
+
+    /**
+     * Escape a value for use inside a double-quoted Xero `where` filter string
+     */
+    public function escape(mixed $value): string
+    {
+        return str_replace(['\\', '"'], ['\\\\', '\\"'], (string) $value);
+    }
+
+    /**
+     * Get the error message from the most recent failed API call.
+     * API calls return null on failure, so use this to report why.
+     */
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
     }
 
     public function credentials(): OauthCredentialManager
@@ -61,7 +83,7 @@ class XeroService
     {
         return Cache::remember('xero_organisations', CarbonInterval::day(), function () {
             $organisationsRepo = $this->getOrganisations();
-            return !empty($organisationsRepo) ? $this->getOrganisations()->getOrganisations()[0] : null;
+            return !empty($organisationsRepo) ? ($organisationsRepo->getOrganisations()[0] ?? null) : null;
         });
     }
 
@@ -74,6 +96,7 @@ class XeroService
         $api = $this->api();
 
         if (method_exists($api, $method)) {
+            $this->lastError = null;
             try {
                 $response = $api->$method($this->getTenantId(), ...$parameters);
                 $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
@@ -83,16 +106,42 @@ class XeroService
                 ]);
                 return $response;
             } catch (ApiException $err) {
+                $this->lastError = $this->extractErrorMessage($err);
                 Log::error("[AdminUI Xero]: Error making API call", ['message' => $err->getMessage(), 'trace' => $err->getTraceAsString(), 'data' => $err->getResponseObject()]);
                 if ($err->getCode() === 429) {
                     $headers = $err->getResponseHeaders();
                     Log::error("[AdminUI Xero] Response header", ['headers' => $headers]);
                 }
-                return;
-                return;
+                return null;
             }
         }
 
         throw new \BadMethodCallException("Method $method does not exist");
+    }
+
+    /**
+     * Pull the most useful message out of a Xero API exception: validation errors where present,
+     * then the response detail, then the raw exception message.
+     */
+    protected function extractErrorMessage(ApiException $err): string
+    {
+        $response = $err->getResponseObject();
+
+        try {
+            $validationErrors = collect(data_get($response, 'elements', []))
+                ->flatMap(fn($element) => data_get($element, 'validation_errors', []) ?? [])
+                ->map(fn($error) => data_get($error, 'message'))
+                ->filter();
+            if ($validationErrors->isNotEmpty()) {
+                return $validationErrors->implode('; ');
+            }
+            if ($detail = data_get($response, 'detail') ?? data_get($response, 'message')) {
+                return $err->getCode() . ': ' . $detail;
+            }
+        } catch (\Throwable) {
+            // Fall through to the generic message
+        }
+
+        return $err->getMessage();
     }
 }

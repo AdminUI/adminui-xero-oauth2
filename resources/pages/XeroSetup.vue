@@ -71,6 +71,27 @@
 				</AuiSetting>
 				<VDivider />
 
+				<AuiSetting
+					title="Invoice Codes"
+					help="The Xero account code that sales are recorded against, and the Xero tax type used for standard-rated (20%) lines. Other lines are sent with no tax."
+				>
+					<AuiInputText
+						v-model="form.xero_sales_account_code"
+						label="Sales Account Code"
+						placeholder="200"
+						:error="formErrors.xero_sales_account_code"
+						class="max-w-prose"
+					/>
+					<AuiInputText
+						v-model="form.xero_standard_tax_type"
+						label="Standard Rate Tax Type"
+						placeholder="OUTPUT2"
+						:error="formErrors.xero_standard_tax_type"
+						class="max-w-prose"
+					/>
+				</AuiSetting>
+				<VDivider />
+
 				<AuiSetting title="App Credentials">
 					<template #help>
 						To enable AdminUI to connect with your Xero account, you must create an app and then enter its

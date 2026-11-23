@@ -11,6 +11,7 @@ use AdminUI\AdminUI\Models\Option;
 use AdminUI\AdminUIXero\Commands\DisconnectFromXero;
 use AdminUI\AdminUIXero\Commands\PushAllOrdersToXero;
 use AdminUI\AdminUIXero\Commands\PushOrderToXeroCommand;
+use AdminUI\AdminUIXero\Commands\SyncXeroAccountBalancesCommand;
 use AdminUI\AdminUIXero\Database\Seeders\ConfigurationSeeder;
 use AdminUI\AdminUIXero\Database\Seeders\NavigationSeeder;
 use AdminUI\AdminUIXero\Facades\Xero;
@@ -22,6 +23,7 @@ use AdminUI\AdminUIXero\Services\XeroContactService;
 use AdminUI\AdminUIXero\Services\XeroInvoiceService;
 use AdminUI\AdminUIXero\Services\XeroPaymentService;
 use AdminUI\AdminUIXero\Services\XeroService;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Vite;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -69,7 +71,8 @@ class Provider extends ServiceProvider
         if (!$this->app->runningInConsole()) {
             $this->pushJavascript();
         } else {
-            $this->commands([PushOrderToXeroCommand::class, PushAllOrdersToXero::class, DisconnectFromXero::class]);
+            $this->commands([PushOrderToXeroCommand::class, PushAllOrdersToXero::class, DisconnectFromXero::class, SyncXeroAccountBalancesCommand::class]);
+            $this->setupSchedule();
         }
 
         $this->publishes([
@@ -106,6 +109,17 @@ class Provider extends ServiceProvider
                 return true;
             });
         }
+    }
+
+    /**
+     * Periodically resync balances to catch anything the webhooks missed (e.g. credit notes)
+     */
+    private function setupSchedule(): void
+    {
+        $this->app->booted(function () {
+            $schedule = $this->app->make(Schedule::class);
+            $schedule->command('adminui:xero-sync-balances --queue')->hourly();
+        });
     }
 
     /**

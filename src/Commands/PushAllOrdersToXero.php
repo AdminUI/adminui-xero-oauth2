@@ -5,7 +5,7 @@ namespace AdminUI\AdminUIXero\Commands;
 use Illuminate\Console\Command;
 use AdminUI\AdminUI\Models\Order;
 use AdminUI\AdminUI\Traits\CliTrait;
-use AdminUI\AdminUI\Events\Public\OrderCreated;
+use AdminUI\AdminUI\Events\Public\OrderPlaced;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 
 
@@ -47,14 +47,23 @@ class PushAllOrdersToXero extends Command
         $this->cliProgressStart($orders->count());
 
         foreach ($orders as $order) {
-            $event = new OrderCreated($order);
             if (!$order->account) {
                 $this->cliInfo('No account for order:' . $order->id);
+                $this->cliProgress();
                 continue;
             }
 
-            SendOrderToXero::dispatchSync($event);
-            $this->info('Order has been pushed to Xero');
+            try {
+                app(SendOrderToXero::class)->handle(new OrderPlaced($order));
+                if ($order->integrations()->type('xero')->whereNotNull('processed_at')->exists()) {
+                    $this->info('Order ' . $order->id . ' has been pushed to Xero');
+                } else {
+                    $this->warn('Order ' . $order->id . ' was not pushed. Check that order syncing is enabled and Xero is connected');
+                }
+            } catch (\Throwable $e) {
+                report($e);
+                $this->error('Order ' . $order->id . ' failed: ' . $e->getMessage());
+            }
 
             $this->cliProgress();
             sleep(1);

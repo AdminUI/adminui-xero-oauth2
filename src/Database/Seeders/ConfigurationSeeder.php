@@ -60,6 +60,22 @@ class ConfigurationSeeder extends Seeder
             'is_active' => true
         ], PaymentMethod::values());
 
+        Config::create('xero_sales_account_code', [
+            'label' => 'Sales Account Code',
+            'section' => 'xero',
+            'type' => 'text',
+            'is_private' => true,
+            'is_active' => true
+        ], '200');
+
+        Config::create('xero_standard_tax_type', [
+            'label' => 'Standard Rate Tax Type',
+            'section' => 'xero',
+            'type' => 'text',
+            'is_private' => true,
+            'is_active' => true
+        ], 'OUTPUT2');
+
         Config::create('xero_client_id', [
             'label' => 'Client ID',
             'section' => 'xero',

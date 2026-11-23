@@ -9,6 +9,19 @@ use Webfox\Xero\Oauth2CredentialManagers\ModelStore;
 
 class ConfigServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        // API calls are logged to their own file. Apps can override this by defining a `xero` channel.
+        if (empty(config('logging.channels.xero'))) {
+            config(['logging.channels.xero' => [
+                'driver' => 'daily',
+                'path' => storage_path('logs/xero.log'),
+                'level' => 'info',
+                'days' => 14,
+            ]]);
+        }
+    }
+
     public function boot(): void
     {
         $enabled = Configuration::firstWhere('name', 'xero_enabled');

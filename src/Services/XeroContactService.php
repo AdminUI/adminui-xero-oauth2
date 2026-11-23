@@ -5,9 +5,8 @@ namespace AdminUI\AdminUIXero\Services;
 use AdminUI\AdminUI\Helpers\Money;
 use AdminUI\AdminUI\Models\Account;
 use AdminUI\AdminUI\Models\User;
+use AdminUI\AdminUIXero\Exceptions\SyncFailedException;
 use AdminUI\AdminUIXero\Facades\Xero;
-use Carbon\CarbonInterval;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use XeroAPI\XeroPHP\Models\Accounting\Address;
 use XeroAPI\XeroPHP\Models\Accounting\PaymentTerm;
@@ -15,57 +14,37 @@ use XeroAPI\XeroPHP\Models\Accounting\Phone;
 
 class XeroContactService
 {
+    /**
+     * Create or update the Xero contact for an account
+     *
+     * @throws SyncFailedException When Xero rejects the contact
+     */
     public function getContact(Account $account): \XeroAPI\XeroPHP\Models\Accounting\Contact
     {
+        $user = $this->getUser($account);
+        logger('Xero contact user: ' . ($user?->id ?? 'none found'));
 
+        $contact = $this->createContact($account, $user);
+        if (empty($contact)) {
+            throw new SyncFailedException(
+                "Unable to create or update the Xero contact for account {$account->id}: " . (Xero::getLastError() ?? 'unknown error')
+            );
+        }
 
-        // Finding Xero contact by email address
-        $user = self::getUser($account);
-        logger('User:' . $user->id ?? 'none found');
-
-        // if ($user) {
-        //     $contact = self::getContactByEmail($user->email);
-        // }
-
-        // if ($contact) {
-        //     if (count($contact) == 1) {
-        //         // Contacts been found.
-        //         // Update the contact
-
-        //         return $contact[0];
-        //     }
-        // }
-
-        // // did nt have a matching email , try to match account name
-        // $contact = self::getContactByName(self::clean($account->name));
-        // if ($contact) {
-        //     if (count($contact) == 1) {
-        //         // Contact has been found.
-        //         // Update the contact
-
-        //         return $contact[0];
-        //     }
-        // }
-
-        // definitely does not exist, create a new contact
-        return self::createContact($account, $user);
+        return $contact;
     }
 
     /**
      * Retrieve the most senior user registered to an account
      * @param Account $account The account to search
      */
-    public function getUser(Account $account): User|bool
+    public function getUser(Account $account): ?User
     {
         $user = $account->owners()->first();
         if (!empty($user)) {
             return $user;
         }
-        $user = $account->users()->first();
-        if (!empty($user)) {
-            return $user;
-        }
-        return false;
+        return $account->users()->first();
     }
 
     /**
@@ -79,9 +58,8 @@ class XeroContactService
             return false;
         }
         try {
-            $contacts = Xero::getContact($id);
-            return $contacts[0];
-        } catch (\Exception $e) {
+            return Xero::getContact($id)?->getContacts()[0] ?? false;
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -93,7 +71,7 @@ class XeroContactService
      */
     public function getContactByEmail(string $email): \XeroAPI\XeroPHP\Models\Accounting\Contacts|null
     {
-        return Xero::getContacts(null, 'EmailAddress="' . self::clean($email) . '"') ?? null;
+        return Xero::getContacts(null, 'EmailAddress="' . Xero::escape(self::clean($email)) . '"') ?? null;
     }
 
     /**
@@ -103,7 +81,7 @@ class XeroContactService
      */
     public function getContactByName(string $name): \XeroAPI\XeroPHP\Models\Accounting\Contacts|null
     {
-        return Xero::getContacts(null, 'Name="' . self::clean($name) . '"') ?? null;
+        return Xero::getContacts(null, 'Name="' . Xero::escape(self::clean($name)) . '"') ?? null;
     }
 
     /**
@@ -111,13 +89,13 @@ class XeroContactService
      */
     public function getContactByAccount(string $accountId): \XeroAPI\XeroPHP\Models\Accounting\Contacts|null
     {
-        return Xero::getContacts(null, 'AccountNumber="' . self::clean($accountId) . '"') ?? null;
+        return Xero::getContacts(null, 'AccountNumber="' . Xero::escape(self::clean($accountId)) . '"') ?? null;
     }
 
     /**
      * Create a new contact on Xero
      */
-    public function createContact(Account $account, User $user): \XeroAPI\XeroPHP\Models\Accounting\Contact|null
+    public function createContact(Account $account, ?User $user = null): \XeroAPI\XeroPHP\Models\Accounting\Contact|null
     {
         $billingAddress = $account->addresses->sortByDesc('is_billing')->first();
         $addresses = [];
@@ -151,7 +129,7 @@ class XeroContactService
             'name' => $account->name,
             'contact_number' => 'AUI' . $account->id,
             'account_number' => 'AUI' . $account->id,
-            'email_address' => $user->email ?? 'noemail@' . Str::slug($account->name) . 'co.uk',
+            'email_address' => $user->email ?? 'noemail@' . Str::slug($account->name) . '.co.uk',
             'first_name' => $user->first_name ?? $account->name,
             'last_name' => $user->last_name ?? '',
             'tax_number' => $account->tax_number,
@@ -173,14 +151,19 @@ class XeroContactService
 
         try {
             $result = Xero::updateOrCreateContacts($contactsToSend);
+            $savedContact = $result?->getContacts()[0] ?? null;
+            if (empty($savedContact)) {
+                logger('Xero contact creation failed: ' . (Xero::getLastError() ?? 'no response'));
+                return null;
+            }
 
             // Save the Xero contact ID back to your account
-            if (!empty($result->getContacts()[0]->getContactId())) {
-                $account->xero_contact_id = $result->getContacts()[0]->getContactId();
+            if (!empty($savedContact->getContactId())) {
+                $account->xero_contact_id = $savedContact->getContactId();
                 $account->save();
             }
-            return $result->getContacts()[0];
-        } catch (\Exception $e) {
+            return $savedContact;
+        } catch (\Throwable $e) {
             logger('Xero contact creation failed: ' . $e->getMessage());
             return null;
         }
@@ -206,30 +189,90 @@ class XeroContactService
     }
 
     /**
-     * Used by the Ledger, retrieve an account's credit limit from Xero.
+     * Used by the Ledger, retrieve an account's credit information from its synced Xero balances.
+     * Accounts that have never been synced are synced on demand.
      */
     public function getCreditLimit(Account $account): ?array
     {
-        return Cache::remember('xero_credit_limit_' . $account->id, CarbonInterval::hours(6), function () use ($account) {
-            $contact = $this->getContactByAccount('AUI' . $account->id);
+        if (empty($account->xero_balances_synced_at)) {
+            // Older accounts may only be linked to Xero by account number, so link them by ID first
+            if (empty($account->xero_contact_id) || $account->xero_contact_id === '0') {
+                $contact = $this->getContactByAccount('AUI' . $account->id)?->getContacts()[0] ?? null;
+                if (empty($contact)) {
+                    return null;
+                }
+                $this->saveContact($contact, $account);
+            }
 
-            $outstanding = 0;
-            $overdue = 0;
-            if (empty($contact)) {
+            $this->syncBalances([$account->xero_contact_id]);
+            $account->refresh();
+
+            if (empty($account->xero_balances_synced_at)) {
                 return null;
             }
-            if (isset($contact[0]['balances']['accounts_receivable'])) {
-                $outstanding = Money::convertToSubunit($contact[0]['balances']['accounts_receivable']['outstanding'] ?? 0);
-                $overdue = Money::convertToSubunit($contact[0]['balances']['accounts_receivable']['overdue']);
+        }
+
+        $outstanding = (int) $account->xero_outstanding;
+
+        return [
+            'credited' => 0,
+            'debited' => 0,
+            'balance' => $outstanding,
+            'overdue' => (int) $account->xero_overdue,
+            'available' => $account->credit_limit - $outstanding,
+        ];
+    }
+
+    /**
+     * Fetch accounts receivable balances from Xero and store them against their accounts.
+     *
+     * @param string[]|null $contactIds Limit the sync to these Xero contact IDs. Null syncs every linked account.
+     * @return int The number of accounts updated
+     */
+    public function syncBalances(?array $contactIds = null): int
+    {
+        $query = Account::query()
+            ->whereNotNull('xero_contact_id')
+            ->where('xero_contact_id', '!=', '');
+
+        if ($contactIds !== null) {
+            $contactIds = array_values(array_unique(array_filter($contactIds)));
+            if (empty($contactIds)) {
+                return 0;
             }
-            $available = $account->credit_limit - $outstanding;
-            return [
-                'credited' => 0,
-                'debited' => 0,
-                'balance' => $outstanding,
-                'overdue' => $overdue,
-                'available' => $available
-            ];
+            $query->whereIn('xero_contact_id', $contactIds);
+        }
+
+        $updated = 0;
+
+        // Xero accepts a list of IDs per request; keep batches small enough for the URL length
+        $query->select(['id', 'xero_contact_id'])->chunkById(50, function ($accounts) use (&$updated) {
+            $response = Xero::getContacts(ids: $accounts->pluck('xero_contact_id')->unique()->values()->all());
+            if (empty($response)) {
+                return;
+            }
+
+            $contacts = collect($response->getContacts())->keyBy(fn($contact) => $contact->getContactId());
+            $now = now();
+
+            foreach ($accounts as $account) {
+                $contact = $contacts->get($account->xero_contact_id);
+                if (empty($contact)) {
+                    continue;
+                }
+
+                $receivable = $contact->getBalances()?->getAccountsReceivable();
+
+                Account::whereKey($account->id)->update([
+                    'xero_outstanding' => Money::convertToSubunit($receivable?->getOutstanding() ?? 0),
+                    'xero_overdue' => Money::convertToSubunit($receivable?->getOverdue() ?? 0),
+                    'xero_balances_synced_at' => $now,
+                ]);
+
+                $updated++;
+            }
         });
+
+        return $updated;
     }
 }

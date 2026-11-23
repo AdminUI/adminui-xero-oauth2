@@ -2,13 +2,11 @@
 
 namespace AdminUI\AdminUIXero\Controllers;
 
+use AdminUI\AdminUIXero\Jobs\SyncXeroAccountBalances;
 use Webfox\Xero\Webhook;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Log;
-use XeroApi\XeroPHP\Models\Accounting\Contact;
-use XeroApi\XeroPHP\Models\Accounting\Invoice;
 
 class XeroWebhookController extends Controller
 {
@@ -21,39 +19,29 @@ class XeroWebhookController extends Controller
             return response('', Response::HTTP_UNAUTHORIZED);
         }
 
+        $balanceContactIds = [];
+        $balanceInvoiceIds = [];
+
         // A single webhook trigger can contain multiple events, so we must loop over them
         foreach ($webhook->getEvents() as $event) {
-            if ($event->getEventType() === 'CREATE' && $event->getEventCategory() === 'INVOICE') {
-                $this->invoiceCreated($request, $event->getResource());
-            } elseif ($event->getEventType() === 'CREATE' && $event->getEventCategory() === 'CONTACT') {
-                $this->contactCreated($request, $event->getResource());
-            } elseif ($event->getEventType() === 'UPDATE' && $event->getEventCategory() === 'INVOICE') {
-                $this->invoiceUpdated($request, $event->getResource());
-            } elseif ($event->getEventType() === 'UPDATE' && $event->getEventCategory() === 'CONTACT') {
-                $this->contactUpdated($request, $event->getResource());
+            // Any invoice or contact change may affect an account's balance. Collect the IDs here
+            // and refresh balances on the queue, since Xero expects a quick response.
+            if ($event->getEventCategory() === 'INVOICE') {
+                $balanceInvoiceIds[] = $event->getResourceId();
+                continue;
+            }
+            if ($event->getEventCategory() === 'CONTACT') {
+                $balanceContactIds[] = $event->getResourceId();
             }
         }
 
+        if (!empty($balanceContactIds) || !empty($balanceInvoiceIds)) {
+            SyncXeroAccountBalances::dispatch(
+                array_values(array_unique($balanceContactIds)),
+                array_values(array_unique($balanceInvoiceIds)),
+            );
+        }
+
         return response('', Response::HTTP_OK);
-    }
-
-    protected function invoiceCreated(Request $request, Invoice $invoice)
-    {
-        Log::debug('Webhook: Invoice was created');
-    }
-
-    protected function contactCreated(Request $request, Contact $contact)
-    {
-        Log::debug('Webhook: Contact was created');
-    }
-
-    protected function invoiceUpdated(Request $request, Invoice $invoice)
-    {
-        Log::debug('Webhook: Invoice was updated');
-    }
-
-    protected function contactUpdated(Request $request, Contact $contact)
-    {
-        Log::debug('Webhook: Contact was update');
     }
 }

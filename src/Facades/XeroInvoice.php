@@ -5,6 +5,9 @@ namespace AdminUI\AdminUIXero\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
+ * @method static \XeroAPI\XeroPHP\Models\Accounting\Invoice|bool syncOrder(\AdminUI\AdminUI\Models\Order $order, \XeroAPI\XeroPHP\Models\Accounting\Contact $contact)
+ * @method static void voidOrder(\AdminUI\AdminUI\Models\Order $order)
+ *
  * @see \AdminUI\AdminUIXero\Services\XeroInvoiceService
  */
 class XeroInvoice extends Facade

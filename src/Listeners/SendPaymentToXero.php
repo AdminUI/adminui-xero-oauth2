@@ -19,6 +19,21 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
     public $delay = 5;
 
     /**
+     * Exceptions (e.g. Xero errors) are retried with increasing delays
+     */
+    public $backoff = [30, 120, 600];
+
+    /**
+     * Waiting for the order's invoice releases the job back to the queue, which uses up attempts.
+     * Allow a generous window instead of a fixed number of attempts so slow order syncs don't
+     * cause payments to fail permanently.
+     */
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHours(6);
+    }
+
+    /**
      * Handle the event to push a payment to xero
      */
     public function handle(PaymentReceived $event): void
@@ -35,11 +50,21 @@ class SendPaymentToXero extends BaseXeroListener implements ShouldHandleEventsAf
             return;
         }
 
-        // If the payment's order has not been turned into an invoice yet, delay this job
-        $order = Order::find($event->payment->order->id);
+        $order = $event->payment->order_id ? Order::find($event->payment->order_id) : null;
+        if (empty($order)) {
+            Log::warning("Payment " . $event->payment->id . " has no order, so it can't be sent to Xero");
+            return;
+        }
+        if (empty($order->account)) {
+            // Orders without an account are never invoiced on Xero, so waiting would never succeed
+            Log::warning("Payment " . $event->payment->id . " belongs to order " . $order->id . " which has no account, so it can't be sent to Xero");
+            return;
+        }
+
+        // If the payment's order has not been turned into an invoice yet, wait and try again
         $xeroOrder = $order->integrations()->type('xero')->first();
-        if (empty($order->invoice_id) || empty($xeroOrder)) {
-            $this->release(10);
+        if (empty($order->invoice_id) || empty($xeroOrder?->process_id)) {
+            $this->release(min(60 * $this->attempts(), 900));
             return;
         }
 

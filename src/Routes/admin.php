@@ -20,8 +20,6 @@ Route::prefix(config('adminui.prefix'))->as('admin.setup.integrations.')->middle
     Route::put('setup/integrations/xero/payments/resync', [XeroPaymentsController::class, 'resync'])->name('xero.payments.resync');
     Route::post('setup/integrations/xero/payments/retry', [XeroPaymentsController::class, 'retry'])->name('xero.payments.retry');
     Route::post('setup/integrations/xero/payments/delete', [XeroPaymentsController::class, 'delete'])->name('xero.payments.delete');
-
-    Route::get('setup/integrations/xero/creditlimit/{account}', [XeroOrdersController::class, 'getCreditLimit']);
 });
 
 Route::prefix(config('adminui.prefix'))->as('admin.')->middleware(['adminui', 'auth:admin'])->group(function () {

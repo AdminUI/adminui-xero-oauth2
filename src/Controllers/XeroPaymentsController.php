@@ -41,7 +41,15 @@ class XeroPaymentsController extends Controller
             'type' => 'xero',
         ]);
 
-        $result = XeroPayment::syncPayment($payment, $orderIntegration->process_id, $paymentIntegration->id);
+        try {
+            $result = XeroPayment::syncPayment($payment, $orderIntegration->process_id, $paymentIntegration->id);
+        } catch (\Throwable $e) {
+            // Don't leave an empty integration behind, otherwise the payment looks synced and can't be retried
+            $paymentIntegration->delete();
+            report($e);
+            Flash::error($e->getMessage(), "Payment Sync Failed");
+            return back();
+        }
         /** @var \DateTime $processedAt */
         $processedAt = $result->getDateAsDate();
 
@@ -77,12 +85,31 @@ class XeroPaymentsController extends Controller
             ]);
         }
 
+        try {
+            // Remove the existing payment from Xero before replacing the local record
+            XeroPayment::deletePayment($integration);
+        } catch (\Throwable $e) {
+            report($e);
+            Flash::error($e->getMessage(), "Payment Re-sync Failed");
+            return back();
+        }
+
+        // A new integration ID gives the replacement payment a fresh idempotency key
         $clone = $integration->replicate();
         $integration->delete();
+        $clone->process_id = null;
+        $clone->processed_at = null;
         $clone->save();
 
-        XeroPayment::deletePayment($clone);
-        $result = XeroPayment::syncPayment($payment, $orderIntegration->process_id, $clone->id);
+        try {
+            $result = XeroPayment::syncPayment($payment, $orderIntegration->process_id, $clone->id);
+        } catch (\Throwable $e) {
+            // The old payment is gone from Xero, so remove the local record to allow a fresh sync
+            $clone->delete();
+            report($e);
+            Flash::error($e->getMessage() . '. The previous Xero payment was removed; use Sync to send it again.', "Payment Re-sync Failed");
+            return back();
+        }
         /** @var \DateTime $processedAt */
         $processedAt = $result->getDateAsDate();
         $clone->process_id = $result->getPaymentId();
@@ -105,7 +132,7 @@ class XeroPaymentsController extends Controller
         $count = 0;
         foreach ($validated['selected'] as $jobId) {
             if (!$jobId) continue;
-            Artisan::call('queue:retry ' . $jobId);
+            Artisan::call('queue:retry', ['id' => [$jobId]]);
             $count++;
         }
 
@@ -126,7 +153,7 @@ class XeroPaymentsController extends Controller
         $count = 0;
         foreach ($validated['selected'] as $jobId) {
             if (!$jobId) continue;
-            Artisan::call('queue:forget ' . $jobId);
+            Artisan::call('queue:forget', ['id' => $jobId]);
             $count++;
         }
 

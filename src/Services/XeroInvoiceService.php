@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use AdminUI\AdminUI\Models\Order;
 use AdminUI\AdminUI\Helpers\Money;
 use Illuminate\Support\Facades\Log;
+use AdminUI\AdminUIXero\Exceptions\SyncFailedException;
 use AdminUI\AdminUIXero\Facades\Xero;
 use XeroAPI\XeroPHP\Models\Accounting\Contact;
 use XeroAPI\XeroPHP\Models\Accounting\Invoice;
@@ -20,6 +21,7 @@ class XeroInvoiceService
      *
      * @param Order $order The order to create an invoice for
      * @param Contact $contact The Xero contact to attach the invoices to
+     * @throws SyncFailedException When Xero rejects the invoice
      */
     public function syncOrder(Order $order, Contact $contact): Invoice|bool
     {
@@ -29,17 +31,20 @@ class XeroInvoiceService
         }
 
         $items = [];
+        $accountCode = $this->getSalesAccountCode();
 
         // Translate the order lines to an invoiceable data structure
         foreach ($order->orderItems as $item) {
+            // The product may have been deleted since the order was placed
+            $sku = $item->orderable?->sku_code;
             $items[] = new LineItem([
-                'description' => $item->product_name . ' (' . $item->orderable->sku_code . ')',
+                'description' => $item->product_name . (!empty($sku) ? ' (' . $sku . ')' : ''),
                 'quantity' => $item->qty,
                 'unit_amount' => Money::convertToBase($item->itemPrice['exc_tax']),
                 'line_amount' => Money::convertToBase($item->linePrice['exc_tax']),
                 'tax_amount' => Money::convertToBase($item->linePrice['tax']),
-                'tax_type' => $item->tax_rate == 20 ? 'OUTPUT2' : 'NONE',
-                'account_code' => 200,
+                'tax_type' => $this->getTaxType($item->tax_rate),
+                'account_code' => $accountCode,
             ]);
         }
 
@@ -52,8 +57,8 @@ class XeroInvoiceService
                 'unit_amount' => Money::convertToBase($order->postagePrice['exc_tax']),
                 'line_amount' => Money::convertToBase($order->postagePrice['exc_tax']),
                 'tax_amount' => Money::convertToBase($order->postagePrice['tax']),
-                'account_code' => 200,
-                'tax_type' => $order->postagePrice['tax_rate'] == 20 ? 'OUTPUT2' : 'NONE',
+                'account_code' => $accountCode,
+                'tax_type' => $this->getTaxType($order->postagePrice['tax_rate']),
             ]);
         }
 
@@ -83,44 +88,90 @@ class XeroInvoiceService
             'status' => 'AUTHORISED',
         ]);
         $invoices = Xero::updateOrCreateInvoices($data);
-        return $invoices[0];
+        $invoice = $invoices?->getInvoices()[0] ?? null;
+        if (empty($invoice)) {
+            throw new SyncFailedException(
+                "Xero rejected the invoice for order {$order->id}: " . (Xero::getLastError() ?? 'no response')
+            );
+        }
+
+        return $invoice;
     }
 
-    public function voidOrder(Order $order)
+    /**
+     * The Xero account code that sales are recorded against
+     */
+    protected function getSalesAccountCode(): string
+    {
+        return (string) (auiSetting('xero_sales_account_code') ?: '200');
+    }
+
+    /**
+     * Map an AdminUI tax rate to a Xero tax type.
+     * Standard-rated (20%) lines use the configured tax type; everything else is sent as having no tax.
+     */
+    protected function getTaxType($taxRate): string
+    {
+        return (float) $taxRate === 20.0
+            ? (string) (auiSetting('xero_standard_tax_type') ?: 'OUTPUT2')
+            : 'NONE';
+    }
+
+    /**
+     * Void an order's invoice on Xero, removing any payments recorded against it first
+     *
+     * @throws SyncFailedException When the invoice can't be retrieved or voided
+     */
+    public function voidOrder(Order $order): void
     {
         $xeroOrder = $order->integrations()->type('xero')->first();
+        if (empty($xeroOrder?->process_id)) {
+            Log::debug("Order " . $order->id . " was never synced to Xero, so there is no invoice to void");
+            return;
+        }
 
-        /** @var Invoices $apiResponse */
+        /** @var Invoices|null $apiResponse */
         $apiResponse = Xero::getInvoice($xeroOrder->process_id, ["payments"]);
+        if (empty($apiResponse)) {
+            throw new SyncFailedException(
+                "Unable to retrieve Xero invoice {$xeroOrder->process_id} for order {$order->id}: " . (Xero::getLastError() ?? 'no response')
+            );
+        }
+
         $foundInvoices = $apiResponse->getInvoices();
         $invoicesModel = new Invoices();
         $processedInvoices = [];
 
         foreach ($foundInvoices as $foundInvoice) {
+            if ($foundInvoice->getStatus() === Invoice::STATUS_VOIDED) {
+                continue;
+            }
 
-            $payments = $foundInvoice->getPayments();
-            if (!empty($payments)) {
-                foreach ($payments as $payment) {
-                    $paymentDelete = new PaymentDelete();
-                    $paymentDelete->setStatus('DELETED');
+            foreach ($foundInvoice->getPayments() ?? [] as $payment) {
+                $paymentDelete = new PaymentDelete();
+                $paymentDelete->setStatus('DELETED');
 
-                    Xero::deletePayment($payment->getPaymentId(), $paymentDelete);
-                    Log::debug("Payment " . $payment->getPaymentId() . " was deleted from invoice.");
+                if (Xero::deletePayment($payment->getPaymentId(), $paymentDelete) === null) {
+                    throw new SyncFailedException(
+                        "Unable to delete payment {$payment->getPaymentId()} from Xero invoice {$xeroOrder->process_id}: " . (Xero::getLastError() ?? 'no response')
+                    );
                 }
+                Log::debug("Payment " . $payment->getPaymentId() . " was deleted from invoice.");
             }
 
             $foundInvoice->setStatus(Invoice::STATUS_VOIDED);
             $processedInvoices[] = $foundInvoice;
         }
 
-        $invoicesModel->setInvoices($processedInvoices);
-        Xero::updateInvoice($xeroOrder->process_id, $invoicesModel);
-
-        if (empty($xeroOrder)) {
-            Log::debug("Order " . $order->id . " was not found in the integrations table");
+        if (empty($processedInvoices)) {
             return;
         }
 
-        // send 'PUT' request with a 'status' : 'voided' to '/invoices/'.$xeroOrder->process_id
+        $invoicesModel->setInvoices($processedInvoices);
+        if (Xero::updateInvoice($xeroOrder->process_id, $invoicesModel) === null) {
+            throw new SyncFailedException(
+                "Unable to void Xero invoice {$xeroOrder->process_id} for order {$order->id}: " . (Xero::getLastError() ?? 'no response')
+            );
+        }
     }
 }

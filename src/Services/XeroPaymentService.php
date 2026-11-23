@@ -7,6 +7,7 @@ use AdminUI\AdminUI\Helpers\Money;
 use AdminUI\AdminUI\Models\OrderIntegration;
 use AdminUI\AdminUI\Models\Payment;
 use Illuminate\Support\Facades\Log;
+use AdminUI\AdminUIXero\Exceptions\SyncFailedException;
 use AdminUI\AdminUIXero\Facades\Xero;
 
 class XeroPaymentService
@@ -43,16 +44,32 @@ class XeroPaymentService
         }
 
         $payments = Xero::createPayment($payment, $idempotency);
-        logger('Payment ID: ' . $paymentModel->id . '|' . $payments);
+        $created = $payments?->getPayments()[0] ?? null;
+        if (empty($created)) {
+            throw new SyncFailedException(
+                "Xero rejected payment {$paymentModel->id}: " . (Xero::getLastError() ?? 'no response')
+            );
+        }
+        logger('Payment ID: ' . $paymentModel->id . '|' . $created->getPaymentId());
 
-        return $payments[0];
+        return $created;
     }
 
-    public function deletePayment(OrderIntegration $integration): \XeroAPI\XeroPHP\Models\Accounting\Payments|\XeroAPI\XeroPHP\Models\Accounting\Error
+    /**
+     * @throws SyncFailedException When Xero refuses to delete the payment
+     */
+    public function deletePayment(OrderIntegration $integration): \XeroAPI\XeroPHP\Models\Accounting\Payments
     {
         $paymentDelete = new \XeroAPI\XeroPHP\Models\Accounting\PaymentDelete;
         $paymentDelete->setStatus('DELETED');
 
-        return Xero::deletePayment($integration->process_id, $paymentDelete, "DELETE_ " . $integration->id);
+        $result = Xero::deletePayment($integration->process_id, $paymentDelete, "DELETE_" . $integration->id);
+        if (empty($result)) {
+            throw new SyncFailedException(
+                "Unable to delete Xero payment {$integration->process_id}: " . (Xero::getLastError() ?? 'no response')
+            );
+        }
+
+        return $result;
     }
 }

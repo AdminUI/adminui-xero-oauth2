@@ -51,6 +51,11 @@ class SendOrderToXero extends BaseXeroListener
         // Generate an invoice
         logger('sending invoice');
         $invoice = XeroInvoice::syncOrder($order, $contact);
+        if ($invoice === false) {
+            Log::warning('Order '.$order->id.' has no items, so no Xero invoice was created');
+
+            return;
+        }
 
         // Check for any validation errors processing the invoice before saving as processed
         if (! empty($invoice['validation_errors'])) {

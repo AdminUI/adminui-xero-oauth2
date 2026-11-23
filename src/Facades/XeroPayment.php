@@ -5,8 +5,8 @@ namespace AdminUI\AdminUIXero\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static \XeroAPI\XeroPHP\Models\Accounting\Payment syncPayment(\AdminUI\AdminUI\Models\Payment $payment, string $processId = null)
- * @method static \XeroAPI\XeroPHP\Models\Accounting\Payments|\XeroAPI\XeroPHP\Models\Accounting\Error deletePayment(\AdminUI\AdminUI\Models\OrderIntegration $integration)
+ * @method static \XeroAPI\XeroPHP\Models\Accounting\Payment syncPayment(\AdminUI\AdminUI\Models\Payment $payment, ?string $processId = null, ?int $integrationId = null)
+ * @method static \XeroAPI\XeroPHP\Models\Accounting\Payments deletePayment(\AdminUI\AdminUI\Models\OrderIntegration $integration)
  * 
  * @see \AdminUI\AdminUIXero\Services\XeroPaymentService
  */

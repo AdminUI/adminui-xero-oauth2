@@ -2,13 +2,11 @@
 
 namespace AdminUI\AdminUIXero\Controllers;
 
-use AdminUI\AdminUI\Events\Public\OrderCreated;
 use AdminUI\AdminUI\Events\Public\OrderPlaced;
 use AdminUI\AdminUI\Facades\Flash;
 use AdminUI\AdminUI\Models\Order;
 use AdminUI\AdminUI\Resources\Admin\OrderTableResource;
 use AdminUI\AdminUI\Traits\ApiResponseTrait;
-use AdminUI\AdminUIXero\Facades\XeroContact;
 use AdminUI\AdminUIXero\Helpers\FailedJobs;
 use AdminUI\AdminUIXero\Listeners\SendOrderToXero;
 use Illuminate\Http\Request;
@@ -50,14 +48,13 @@ class XeroOrdersController extends Controller
         ]);
 
         $count = 0;
-        foreach ($validated['orders'] as $orderId) {
+        foreach ($validated['orders'] ?? [] as $orderId) {
             $order = Order::find($orderId);
             if (! $order) {
                 continue;
             }
 
-            $event = new OrderCreated($order);
-            SendOrderToXero::dispatch($event);
+            SendOrderToXero::queue(new OrderPlaced($order));
             $count++;
         }
 
@@ -73,24 +70,43 @@ class XeroOrdersController extends Controller
             'orders.*' => ['required', 'integer', 'exists:orders,id'],
         ]);
 
-        $count = 0;
-        $log = collect([]);
-        foreach ($validated['orders'] as $orderId) {
+        $log = collect();
+        foreach ($validated['orders'] ?? [] as $orderId) {
             $order = Order::find($orderId);
             if (! $order) {
                 continue;
             }
 
-            $event = new OrderPlaced($order);
-            $syncLog = app(SendOrderToXero::class)->handle($event);
-            $log = $log->merge($syncLog);
-            $count++;
+            try {
+                app(SendOrderToXero::class)->handle(new OrderPlaced($order));
+                $integration = $order->integrations()->type('xero')->first();
+                $log->push([
+                    'order_id' => $order->id,
+                    'success' => ! empty($integration?->processed_at),
+                    'message' => ! empty($integration?->processed_at)
+                        ? 'Synced to Xero invoice ' . $integration->process_id
+                        : 'Not synced, check the Xero settings and that the order has an account',
+                ]);
+            } catch (\Throwable $e) {
+                report($e);
+                $log->push([
+                    'order_id' => $order->id,
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ]);
+            }
         }
 
-        Flash::success($count . ' orders have been synced with Xero', 'Order Synced');
+        $synced = $log->where('success', true)->count();
+        $failed = $log->count() - $synced;
+        if ($failed > 0) {
+            Flash::error($synced . ' orders synced, ' . $failed . ' failed. ' . $log->firstWhere('success', false)['message'], 'Order Sync Failed');
+        } else {
+            Flash::success($synced . ' orders have been synced with Xero', 'Order Synced');
+        }
 
         return $this->respondWithData([
-            'log' => $log,
+            'log' => $log->values(),
         ]);
     }
 
@@ -106,7 +122,7 @@ class XeroOrdersController extends Controller
             if (! $jobId) {
                 continue;
             }
-            Artisan::call('queue:retry ' . $jobId);
+            Artisan::call('queue:retry', ['id' => [$jobId]]);
             $count++;
         }
 
@@ -121,7 +137,7 @@ class XeroOrdersController extends Controller
     {
         $validated = $request->validate([
             'selected' => ['required', 'array'],
-            'selected.*' => ['required'],
+            'selected.*' => ['required', 'string'],
         ]);
 
         $count = 0;
@@ -129,7 +145,7 @@ class XeroOrdersController extends Controller
             if (! $jobId) {
                 continue;
             }
-            Artisan::call('queue:forget ' . $jobId);
+            Artisan::call('queue:forget', ['id' => $jobId]);
             $count++;
         }
 
@@ -138,11 +154,5 @@ class XeroOrdersController extends Controller
         Flash::success($count . ' jobs were successfully deleted from the queue', 'Jobs Deleted');
 
         return back();
-    }
-
-    public function getCreditLimit()
-    {
-        $contact = XeroContact::getContactByAccount('AUI1000');
-        dd($contact);
     }
 }
