@@ -32,11 +32,16 @@ class AccountLedgersController extends Controller
                     // Balances are synced from Xero into local columns (see SyncXeroAccountBalances)
                     new HeaderDTO(value: 'outstanding', title: 'Outstanding', sortColumn: 'xero_outstanding'),
                     new HeaderDTO(value: 'overdue', title: 'Overdue', sortColumn: 'xero_overdue'),
+                    new HeaderDTO(value: 'available_credit', title: 'Available Credit'),
                     new HeaderDTO(value: 'balance_status', title: 'Status', sortColumn: 'xero_outstanding', nowrap: true),
                     new HeaderDTO(value: 'on_hold', title: 'On Hold', editable: true, editComponent: 'switch'),
                     new HeaderDTO(value: 'is_active', title: 'Active', editable: true, editComponent: 'switch'),
                     new HeaderDTO(value: 'actions')
                 ])
+                // Computed in SQL so the column can be sorted. Null until the account has synced with Xero.
+                ->setQuery(fn($query) => $query->select('accounts.*')->selectRaw(
+                    'CASE WHEN xero_outstanding IS NULL THEN NULL ELSE credit_limit - xero_outstanding END AS available_credit'
+                ))
                 ->setCollection(AccountWithLedgerResource::class)
                 ->where('credit_limit', '>', 0)
                 ->get()

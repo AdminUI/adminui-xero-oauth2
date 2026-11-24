@@ -19,6 +19,10 @@
 					<template #item.overdue="{ value }">
 						{{ value === null ? "-" : currency(value) }}
 					</template>
+					<template #item.available_credit="{ value }">
+						<span v-if="value === null || value === undefined">-</span>
+						<span v-else :class="{ 'text-error': Number(value) < 0 }">{{ currency(value) }}</span>
+					</template>
 					<template #item.balance_status="{ item }">
 						<VChip v-if="getBalanceStatus(item)" :color="getBalanceStatus(item).color" size="small" label>
 							<template #prepend>
