@@ -1,0 +1,1 @@
+- **Improvement**: Account ledgers table, inline editing of notes
